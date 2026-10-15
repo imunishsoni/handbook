@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; font-src 'self' data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <title>Sublime Text</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Title Bar (macOS hiddenInset — drag region with traffic light space) -->
+  <div id="titlebar">
+    <div id="titlebar-drag"></div>
+    <span id="titlebar-title">Sublime Text</span>
+  </div>
+
+  <!-- Main Layout -->
+  <div id="main-container">
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div id="sidebar-header">
+        <span id="sidebar-title">FOLDERS</span>
+      </div>
+      <div id="file-tree"></div>
+    </div>
+
+    <!-- Sidebar Resize Handle -->
+    <div id="sidebar-resize-handle"></div>
+
+    <!-- Editor Area -->
+    <div id="editor-area">
+      <!-- Tab Bar -->
+      <div id="tab-bar">
+        <div id="tabs"></div>
+      </div>
+
+      <!-- Editor Container -->
+      <div id="editor-container">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen">
+          <div class="welcome-content">
+            <h1>Sublime Text</h1>
+            <p class="welcome-subtitle">A sophisticated text editor for code, markup and prose</p>
+            <div class="welcome-shortcuts">
+              <div class="shortcut-group">
+                <h3>Start</h3>
+                <div class="shortcut" data-action="openFile"><kbd>⌘</kbd><kbd>O</kbd><span>Open File</span></div>
+                <div class="shortcut" data-action="openFolder"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>O</kbd><span>Open Folder</span></div>
+                <div class="shortcut" data-action="newFile"><kbd>⌘</kbd><kbd>N</kbd><span>New File</span></div>
+              </div>
+              <div class="shortcut-group">
+                <h3>Navigate</h3>
+                <div class="shortcut" data-action="gotoFile"><kbd>⌘</kbd><kbd>P</kbd><span>Go to File</span></div>
+                <div class="shortcut" data-action="commandPalette"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>P</kbd><span>Command Palette</span></div>
+                <div class="shortcut" data-action="gotoLine"><kbd>⌘</kbd><kbd>G</kbd><span>Go to Line</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monaco Editor Mount Point -->
+        <div id="monaco-editor"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div id="status-bar">
+    <div id="status-left">
+      <span id="status-message"></span>
+    </div>
+    <div id="status-right">
+      <span id="status-position">Ln 1, Col 1</span>
+      <span class="status-sep">|</span>
+      <span id="status-indentation">Spaces: 4</span>
+      <span class="status-sep">|</span>
+      <span id="status-encoding">UTF-8</span>
+      <span class="status-sep">|</span>
+      <span id="status-language">Plain Text</span>
+    </div>
+  </div>
+
+  <!-- Go-To Overlay (⌘P / ⌘⇧P / ⌘G) -->
+  <div id="goto-overlay" class="hidden">
+    <div id="goto-panel">
+      <input type="text" id="goto-input" placeholder="Go to File…" autocomplete="off" spellcheck="false">
+      <div id="goto-results"></div>
+    </div>
+  </div>
+
+  <!-- Load Monaco AMD loader then the app -->
+  <script src="./node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script src="./renderer.js"></script>
+</body>
+</html>

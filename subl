@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Launcher for Sublime Text Clone
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ELECTRON="$DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+
+if [ ! -f "$ELECTRON" ]; then
+  ELECTRON="electron"
+fi
+
+if [ "$1" == "" ]; then
+  exec "$ELECTRON" "$DIR"
+else
+  exec "$ELECTRON" "$DIR" "$@"
+fi
