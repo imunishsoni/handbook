@@ -37,20 +37,23 @@ Handbook is a desktop application combining a native Swift core (AppKit & WKWebV
 
 ---
 
-## Reporting a Vulnerability
+## Reporting a Security Issue or Vulnerability
 
-We practice **Coordinated Vulnerability Disclosure (CVD)**. If you discover a security issue or potential vulnerability, please report it responsibly so we can resolve it before public release:
+As an open-source project, **public issues are warmly welcomed!** We believe in transparency and community-driven collaboration.
 
-### 1. Preferred Method: GitHub Private Security Advisory
-Submit your report confidentially through GitHub:
-👉 **[Open a Security Advisory Report](https://github.com/imunishsoni/handbook/security/advisories/new)**
+You are free to choose how you wish to report security issues or concerns:
 
-*This is the most secure and fastest method, allowing encrypted tracking and collaborative drafting of patches in a private workspace.*
+### Option 1: Open a Public GitHub Issue (Fully Welcome)
+For general security observations, dependency concerns, bug reports, and hardening ideas:
+👉 **[Open a Public GitHub Issue](https://github.com/imunishsoni/handbook/issues/new)**
 
-### 2. Alternative Method: Direct Maintainer Contact
-If you cannot use GitHub Security Advisories, contact the project maintainer directly:
-- **Maintainer**: Munish Soni
-- **GitHub Profile**: [@imunishsoni](https://github.com/imunishsoni)
+Public issues allow the whole community to openly discuss, verify, and submit pull requests.
+
+### Option 2: Private Security Advisory (Optional for Sensitive Disclosures)
+If you discover a critical 0-day vulnerability and prefer coordinated confidential disclosure prior to public release:
+👉 **[Open a Confidential Security Advisory Report](https://github.com/imunishsoni/handbook/security/advisories/new)**
+
+You can also reach out to the project maintainer directly via GitHub ([@imunishsoni](https://github.com/imunishsoni)). Both public issues and private advisories are fully respected, actively triaged, and covered under our Safe Harbor policy.
 
 ### What to Include in Your Report
 To help us triage and resolve the issue quickly, please include:

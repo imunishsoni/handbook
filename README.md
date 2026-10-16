@@ -148,9 +148,9 @@ npm run dmg
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributing & Community
 
-Contributions are warmly welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md), and [Security Policy](SECURITY.md) before submitting pull requests or vulnerability reports.
+Contributions, feature ideas, and **public issues are warmly welcomed!** Feel free to open a [public GitHub Issue](https://github.com/imunishsoni/handbook/issues) to report bugs, suggest enhancements, or start a discussion. Please review our [Contributing Guidelines](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md), and [Security Policy](SECURITY.md) before submitting pull requests.
 
 ---
 

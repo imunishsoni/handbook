@@ -89,6 +89,8 @@ handbook/
 
 ---
 
-## 🔒 Security Vulnerabilities
+## 🔒 Issues & Security Reports
 
-If you discover a security vulnerability, please do **not** open a public issue. Follow our [Security Policy](SECURITY.md) to report vulnerabilities privately and coordinate fixes under our Safe Harbor policy.
+**Public issues are warmly welcomed!** Whether you found a bug, have a performance or hardening suggestion, or want to report a security observation, you are invited to open a [public GitHub Issue](https://github.com/imunishsoni/handbook/issues/new).
+
+For sensitive security reports requiring confidential pre-release coordination, GitHub Security Advisories are also optionally available as outlined in our [Security Policy](SECURITY.md). All good-faith reports are protected by our Safe Harbor policy.
