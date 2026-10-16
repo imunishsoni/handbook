@@ -86,3 +86,9 @@ handbook/
    ```
 4. Commit with descriptive commit messages following the Conventional Commits specification (e.g. `feat: ...`, `fix: ...`, `docs: ...`, `perf: ...`).
 5. Push to your fork and submit a Pull Request.
+
+---
+
+## 🔒 Security Vulnerabilities
+
+If you discover a security vulnerability, please do **not** open a public issue. Follow our [Security Policy](SECURITY.md) to report vulnerabilities privately and coordinate fixes under our Safe Harbor policy.

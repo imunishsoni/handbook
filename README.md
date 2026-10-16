@@ -150,7 +150,7 @@ npm run dmg
 
 ## 🤝 Contributing
 
-Contributions are warmly welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting pull requests.
+Contributions are warmly welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md), and [Security Policy](SECURITY.md) before submitting pull requests or vulnerability reports.
 
 ---
 
