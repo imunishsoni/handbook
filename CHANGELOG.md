@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-10-16
+
+### 🎨 Customizable Themes & Neutral Default
+- **Neutral Dark Default**: Refined zinc & graphite palette (`#1c1c1f` background, `#e4e4e7` foreground, `#161618` chrome) tailored for long coding sessions with minimal eye strain.
+- **Interactive Theme Switcher**: Instant theme picker accessible via Command Palette (`⌘⇧P` -> "Preferences: Color Theme"), View Menu, Welcome screen, or clicking the status bar theme indicator.
+- **Real-Time Live Preview**: Browse themes with `↑` and `↓` arrow keys with real-time editor and UI color previewing; pressing `Escape` cleanly cancels and restores your prior theme.
+- **5 Curated Themes**:
+  - **Handbook Neutral** (Default balanced graphite dark)
+  - **Midnight Slate** (High-contrast indigo slate)
+  - **Obsidian Black** (OLED true black)
+  - **Warm Coffee** (Sepia warm dark)
+  - **Paper Light** (High-contrast clean light)
+- **Persistent Preferences**: Selected color theme is remembered across application restarts via local storage.
+
+---
+
 ## [2.0.0] - 2026-10-16
 
 ### ⚡ Performance & Architecture

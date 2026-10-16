@@ -15,6 +15,8 @@ let gotoMode = null;               // 'file' | 'command' | 'line'
 let gotoSelectedIndex = 0;
 let fontSize = 14;
 let untitledCounter = 0;
+let currentThemeId = localStorage.getItem('handbook_theme') || 'handbook-neutral';
+let preThemeId = currentThemeId;
 
 // ===== DOM refs =====
 const $ = (s) => document.querySelector(s);
@@ -26,6 +28,7 @@ const fileTreeEl        = $('#file-tree');
 const tabsEl            = $('#tabs');
 const monacoEditorEl    = $('#monaco-editor');
 const welcomeScreen     = $('#welcome-screen');
+const statusTheme       = $('#status-theme');
 const statusPosition    = $('#status-position');
 const statusIndentation = $('#status-indentation');
 const statusEncoding    = $('#status-encoding');
@@ -35,6 +38,428 @@ const gotoOverlay       = $('#goto-overlay');
 const gotoInput         = $('#goto-input');
 const gotoResults       = $('#goto-results');
 const resizeHandle      = $('#sidebar-resize-handle');
+
+// ============================================================
+//  Theme System (Customizable & Neutral Default)
+// ============================================================
+
+const THEMES = {
+  'handbook-neutral': {
+    name: 'Handbook Neutral',
+    category: 'Balanced Dark (Default)',
+    isDark: true,
+    ui: {
+      '--bg-editor':        '#1c1c1f',
+      '--bg-sidebar':       '#161618',
+      '--bg-titlebar':      '#161618',
+      '--bg-tabbar':        '#161618',
+      '--bg-active-tab':    '#1c1c1f',
+      '--bg-inactive-tab':  '#161618',
+      '--bg-statusbar':     '#131315',
+      '--bg-hover':         'rgba(255, 255, 255, 0.05)',
+      '--bg-selected':      'rgba(255, 255, 255, 0.10)',
+      '--bg-input':         '#242427',
+      '--bg-overlay':       '#1f1f23',
+      '--text-primary':     '#e4e4e7',
+      '--text-secondary':   '#a1a1aa',
+      '--text-muted':       '#71717a',
+      '--text-dim':         '#52525b',
+      '--border':           'rgba(255, 255, 255, 0.08)',
+      '--border-subtle':    'rgba(255, 255, 255, 0.14)',
+      '--border-focus':     '#a1a1aa',
+      '--accent-purple':    '#a1a1aa',
+      '--accent-cyan':      '#93c5fd',
+      '--accent-mint':      '#86efac',
+      '--accent-pink':      '#f472b6',
+      '--accent-gradient':  'linear-gradient(135deg, #e4e4e7 0%, #a1a1aa 100%)',
+    },
+    monaco: {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment',            foreground: '71717a', fontStyle: 'italic' },
+        { token: 'keyword',            foreground: '93c5fd', fontStyle: 'bold' },
+        { token: 'string',             foreground: '86efac' },
+        { token: 'number',             foreground: 'fdba74' },
+        { token: 'type',               foreground: 'c4b5fd', fontStyle: 'italic' },
+        { token: 'class',              foreground: '67e8f9' },
+        { token: 'function',           foreground: '7dd3fc' },
+        { token: 'variable',           foreground: 'e4e4e7' },
+        { token: 'constant',           foreground: 'fca5a5' },
+        { token: 'operator',           foreground: 'cbd5e1' },
+        { token: 'tag',                foreground: '93c5fd' },
+        { token: 'attribute.name',     foreground: '67e8f9' },
+        { token: 'attribute.value',    foreground: '86efac' },
+        { token: 'delimiter',          foreground: 'a1a1aa' },
+        { token: 'metatag',            foreground: 'c4b5fd' },
+        { token: 'regexp',             foreground: 'fdba74' },
+      ],
+      colors: {
+        'editor.background':                    '#1c1c1f',
+        'editor.foreground':                    '#e4e4e7',
+        'editorCursor.foreground':              '#e4e4e7',
+        'editor.lineHighlightBackground':       '#242428',
+        'editor.selectionBackground':           '#ffffff18',
+        'editor.inactiveSelectionBackground':   '#ffffff0d',
+        'editorLineNumber.foreground':           '#52525b',
+        'editorLineNumber.activeForeground':     '#a1a1aa',
+        'editorIndentGuide.background':          '#27272a',
+        'editorIndentGuide.activeBackground':    '#52525b',
+        'editorWhitespace.foreground':           '#27272a',
+        'editorWidget.background':               '#1f1f23',
+        'editorWidget.border':                   '#27272a',
+        'input.background':                      '#242427',
+        'input.foreground':                      '#e4e4e7',
+        'input.border':                          '#3f3f46',
+        'focusBorder':                           '#71717a',
+        'scrollbar.shadow':                      '#00000000',
+        'scrollbarSlider.background':            '#ffffff12',
+        'scrollbarSlider.hoverBackground':       '#ffffff22',
+        'scrollbarSlider.activeBackground':      '#ffffff30',
+        'minimap.background':                    '#1c1c1f',
+        'minimapSlider.background':              '#ffffff10',
+        'minimapSlider.hoverBackground':         '#ffffff20',
+        'minimapSlider.activeBackground':        '#ffffff28',
+        'editorOverviewRuler.border':            '#1c1c1f',
+      }
+    }
+  },
+  'midnight-slate': {
+    name: 'Midnight Slate',
+    category: 'Vibrant Dark',
+    isDark: true,
+    ui: {
+      '--bg-editor':        '#0d1117',
+      '--bg-sidebar':       '#090d14',
+      '--bg-titlebar':      '#090d14',
+      '--bg-tabbar':        '#090d14',
+      '--bg-active-tab':    '#0d1117',
+      '--bg-inactive-tab':  '#090d14',
+      '--bg-statusbar':     '#070a0f',
+      '--bg-hover':         'rgba(255, 255, 255, 0.05)',
+      '--bg-selected':      'rgba(124, 58, 237, 0.22)',
+      '--bg-input':         '#151b2a',
+      '--bg-overlay':       '#101522',
+      '--text-primary':     '#f1f5f9',
+      '--text-secondary':   '#94a3b8',
+      '--text-muted':       '#64748b',
+      '--text-dim':         '#475569',
+      '--border':           'rgba(255, 255, 255, 0.07)',
+      '--border-subtle':    'rgba(255, 255, 255, 0.12)',
+      '--border-focus':     '#8b5cf6',
+      '--accent-purple':    '#8b5cf6',
+      '--accent-cyan':      '#38bdf8',
+      '--accent-mint':      '#2dd4bf',
+      '--accent-pink':      '#ec4899',
+      '--accent-gradient':  'linear-gradient(135deg, #8b5cf6 0%, #38bdf8 100%)',
+    },
+    monaco: {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment',            foreground: '64748b', fontStyle: 'italic' },
+        { token: 'keyword',            foreground: 'c084fc', fontStyle: 'bold' },
+        { token: 'string',             foreground: '34d399' },
+        { token: 'number',             foreground: 'fbbf24' },
+        { token: 'type',               foreground: '818cf8', fontStyle: 'italic' },
+        { token: 'class',              foreground: '67e8f9' },
+        { token: 'function',           foreground: '38bdf8' },
+        { token: 'variable',           foreground: 'f1f5f9' },
+        { token: 'constant',           foreground: 'f43f5e' },
+        { token: 'operator',           foreground: '38bdf8' },
+        { token: 'tag',                foreground: 'c084fc' },
+        { token: 'attribute.name',     foreground: '67e8f9' },
+        { token: 'attribute.value',    foreground: '34d399' },
+        { token: 'delimiter',          foreground: '94a3b8' },
+        { token: 'metatag',            foreground: 'a855f7' },
+        { token: 'regexp',             foreground: 'f43f5e' },
+      ],
+      colors: {
+        'editor.background':                    '#0d1117',
+        'editor.foreground':                    '#f1f5f9',
+        'editorCursor.foreground':              '#38bdf8',
+        'editor.lineHighlightBackground':       '#151b2a',
+        'editor.selectionBackground':           '#7c3aed45',
+        'editor.inactiveSelectionBackground':   '#7c3aed20',
+        'editorLineNumber.foreground':           '#334155',
+        'editorLineNumber.activeForeground':     '#94a3b8',
+        'editorIndentGuide.background':          '#1e293b',
+        'editorIndentGuide.activeBackground':    '#7c3aed',
+        'editorWhitespace.foreground':           '#1e293b',
+        'editorWidget.background':               '#111624',
+        'editorWidget.border':                   '#1e293b',
+        'input.background':                      '#151b2a',
+        'input.foreground':                      '#f1f5f9',
+        'input.border':                          '#334155',
+        'focusBorder':                           '#8b5cf6',
+        'scrollbar.shadow':                      '#00000000',
+        'scrollbarSlider.background':            '#ffffff12',
+        'scrollbarSlider.hoverBackground':       '#ffffff22',
+        'scrollbarSlider.activeBackground':      '#ffffff30',
+        'minimap.background':                    '#0d1117',
+        'minimapSlider.background':              '#ffffff10',
+        'minimapSlider.hoverBackground':         '#ffffff20',
+        'minimapSlider.activeBackground':        '#ffffff28',
+        'editorOverviewRuler.border':            '#0d1117',
+      }
+    }
+  },
+  'obsidian-black': {
+    name: 'Obsidian Black (OLED)',
+    category: 'High Contrast Dark',
+    isDark: true,
+    ui: {
+      '--bg-editor':        '#000000',
+      '--bg-sidebar':       '#080808',
+      '--bg-titlebar':      '#080808',
+      '--bg-tabbar':        '#080808',
+      '--bg-active-tab':    '#000000',
+      '--bg-inactive-tab':  '#080808',
+      '--bg-statusbar':     '#050505',
+      '--bg-hover':         'rgba(255, 255, 255, 0.06)',
+      '--bg-selected':      'rgba(255, 255, 255, 0.14)',
+      '--bg-input':         '#121212',
+      '--bg-overlay':       '#0f0f0f',
+      '--text-primary':     '#ffffff',
+      '--text-secondary':   '#a3a3a3',
+      '--text-muted':       '#737373',
+      '--text-dim':         '#525252',
+      '--border':           'rgba(255, 255, 255, 0.1)',
+      '--border-subtle':    'rgba(255, 255, 255, 0.18)',
+      '--border-focus':     '#ffffff',
+      '--accent-purple':    '#a855f7',
+      '--accent-cyan':      '#06b6d4',
+      '--accent-mint':      '#10b981',
+      '--accent-pink':      '#f43f5e',
+      '--accent-gradient':  'linear-gradient(135deg, #ffffff 0%, #a3a3a3 100%)',
+    },
+    monaco: {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment',            foreground: '737373', fontStyle: 'italic' },
+        { token: 'keyword',            foreground: '60a5fa', fontStyle: 'bold' },
+        { token: 'string',             foreground: '4ade80' },
+        { token: 'number',             foreground: 'facc15' },
+        { token: 'type',               foreground: 'c084fc', fontStyle: 'italic' },
+        { token: 'class',              foreground: '22d3ee' },
+        { token: 'function',           foreground: '38bdf8' },
+        { token: 'variable',           foreground: 'ffffff' },
+        { token: 'constant',           foreground: 'fb7185' },
+        { token: 'operator',           foreground: 'e5e5e5' },
+        { token: 'tag',                foreground: '60a5fa' },
+        { token: 'delimiter',          foreground: 'a3a3a3' },
+      ],
+      colors: {
+        'editor.background':                    '#000000',
+        'editor.foreground':                    '#ffffff',
+        'editorCursor.foreground':              '#ffffff',
+        'editor.lineHighlightBackground':       '#111111',
+        'editor.selectionBackground':           '#ffffff22',
+        'editor.inactiveSelectionBackground':   '#ffffff11',
+        'editorLineNumber.foreground':           '#404040',
+        'editorLineNumber.activeForeground':     '#a3a3a3',
+        'editorIndentGuide.background':          '#1f1f1f',
+        'editorIndentGuide.activeBackground':    '#525252',
+        'editorWhitespace.foreground':           '#1f1f1f',
+        'editorWidget.background':               '#0f0f0f',
+        'editorWidget.border':                   '#262626',
+        'input.background':                      '#121212',
+        'input.foreground':                      '#ffffff',
+        'input.border':                          '#404040',
+        'focusBorder':                           '#737373',
+        'scrollbar.shadow':                      '#00000000',
+        'scrollbarSlider.background':            '#ffffff15',
+        'scrollbarSlider.hoverBackground':       '#ffffff28',
+        'scrollbarSlider.activeBackground':      '#ffffff35',
+        'minimap.background':                    '#000000',
+        'minimapSlider.background':              '#ffffff12',
+        'minimapSlider.hoverBackground':         '#ffffff22',
+        'minimapSlider.activeBackground':        '#ffffff30',
+        'editorOverviewRuler.border':            '#000000',
+      }
+    }
+  },
+  'warm-coffee': {
+    name: 'Warm Coffee',
+    category: 'Sepia Dark',
+    isDark: true,
+    ui: {
+      '--bg-editor':        '#221f1d',
+      '--bg-sidebar':       '#1a1816',
+      '--bg-titlebar':      '#1a1816',
+      '--bg-tabbar':        '#1a1816',
+      '--bg-active-tab':    '#221f1d',
+      '--bg-inactive-tab':  '#1a1816',
+      '--bg-statusbar':     '#151312',
+      '--bg-hover':         'rgba(255, 255, 255, 0.05)',
+      '--bg-selected':      'rgba(217, 119, 6, 0.22)',
+      '--bg-input':         '#2b2724',
+      '--bg-overlay':       '#262220',
+      '--text-primary':     '#f5ebe0',
+      '--text-secondary':   '#d5bdaf',
+      '--text-muted':       '#8d7b68',
+      '--text-dim':         '#605448',
+      '--border':           'rgba(255, 255, 255, 0.07)',
+      '--border-subtle':    'rgba(255, 255, 255, 0.13)',
+      '--border-focus':     '#d97706',
+      '--accent-purple':    '#d97706',
+      '--accent-cyan':      '#f59e0b',
+      '--accent-mint':      '#10b981',
+      '--accent-pink':      '#f43f5e',
+      '--accent-gradient':  'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    },
+    monaco: {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment',            foreground: '8d7b68', fontStyle: 'italic' },
+        { token: 'keyword',            foreground: 'f59e0b', fontStyle: 'bold' },
+        { token: 'string',             foreground: '84cc16' },
+        { token: 'number',             foreground: 'fb923c' },
+        { token: 'type',               foreground: 'eab308', fontStyle: 'italic' },
+        { token: 'class',              foreground: 'fde047' },
+        { token: 'function',           foreground: '38bdf8' },
+        { token: 'variable',           foreground: 'f5ebe0' },
+        { token: 'constant',           foreground: 'f87171' },
+        { token: 'operator',           foreground: 'e5e5e5' },
+      ],
+      colors: {
+        'editor.background':                    '#221f1d',
+        'editor.foreground':                    '#f5ebe0',
+        'editorCursor.foreground':              '#f59e0b',
+        'editor.lineHighlightBackground':       '#2a2624',
+        'editor.selectionBackground':           '#d9770630',
+        'editor.inactiveSelectionBackground':   '#d9770615',
+        'editorLineNumber.foreground':           '#605448',
+        'editorLineNumber.activeForeground':     '#d5bdaf',
+        'editorIndentGuide.background':          '#2e2926',
+        'editorIndentGuide.activeBackground':    '#d97706',
+        'editorWhitespace.foreground':           '#2e2926',
+        'editorWidget.background':               '#262220',
+        'editorWidget.border':                   '#3a332f',
+        'input.background':                      '#2b2724',
+        'input.foreground':                      '#f5ebe0',
+        'input.border':                          '#4a413c',
+        'focusBorder':                           '#d97706',
+        'scrollbar.shadow':                      '#00000000',
+        'scrollbarSlider.background':            '#ffffff12',
+        'scrollbarSlider.hoverBackground':       '#ffffff22',
+        'scrollbarSlider.activeBackground':      '#ffffff30',
+        'minimap.background':                    '#221f1d',
+        'minimapSlider.background':              '#ffffff10',
+        'minimapSlider.hoverBackground':         '#ffffff20',
+        'minimapSlider.activeBackground':        '#ffffff28',
+        'editorOverviewRuler.border':            '#221f1d',
+      }
+    }
+  },
+  'paper-light': {
+    name: 'Paper Light',
+    category: 'Neutral Light',
+    isDark: false,
+    ui: {
+      '--bg-editor':        '#fafafa',
+      '--bg-sidebar':       '#f4f4f5',
+      '--bg-titlebar':      '#f4f4f5',
+      '--bg-tabbar':        '#f4f4f5',
+      '--bg-active-tab':    '#fafafa',
+      '--bg-inactive-tab':  '#f4f4f5',
+      '--bg-statusbar':     '#e4e4e7',
+      '--bg-hover':         'rgba(0, 0, 0, 0.05)',
+      '--bg-selected':      'rgba(37, 99, 235, 0.12)',
+      '--bg-input':         '#ffffff',
+      '--bg-overlay':       '#ffffff',
+      '--text-primary':     '#18181b',
+      '--text-secondary':   '#52525b',
+      '--text-muted':       '#71717a',
+      '--text-dim':         '#a1a1aa',
+      '--border':           'rgba(0, 0, 0, 0.08)',
+      '--border-subtle':    'rgba(0, 0, 0, 0.14)',
+      '--border-focus':     '#2563eb',
+      '--accent-purple':    '#2563eb',
+      '--accent-cyan':      '#0284c7',
+      '--accent-mint':      '#059669',
+      '--accent-pink':      '#e11d48',
+      '--accent-gradient':  'linear-gradient(135deg, #2563eb 0%, #0284c7 100%)',
+    },
+    monaco: {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'comment',            foreground: '71717a', fontStyle: 'italic' },
+        { token: 'keyword',            foreground: '2563eb', fontStyle: 'bold' },
+        { token: 'string',             foreground: '16a34a' },
+        { token: 'number',             foreground: 'd97706' },
+        { token: 'type',               foreground: '7c3aed', fontStyle: 'italic' },
+        { token: 'class',              foreground: '0284c7' },
+        { token: 'function',           foreground: '0284c7' },
+        { token: 'variable',           foreground: '18181b' },
+        { token: 'constant',           foreground: 'dc2626' },
+        { token: 'operator',           foreground: '52525b' },
+        { token: 'tag',                foreground: '2563eb' },
+        { token: 'delimiter',          foreground: '71717a' },
+      ],
+      colors: {
+        'editor.background':                    '#fafafa',
+        'editor.foreground':                    '#18181b',
+        'editorCursor.foreground':              '#18181b',
+        'editor.lineHighlightBackground':       '#f4f4f5',
+        'editor.selectionBackground':           '#2563eb20',
+        'editor.inactiveSelectionBackground':   '#2563eb10',
+        'editorLineNumber.foreground':           '#a1a1aa',
+        'editorLineNumber.activeForeground':     '#18181b',
+        'editorIndentGuide.background':          '#e4e4e7',
+        'editorIndentGuide.activeBackground':    '#a1a1aa',
+        'editorWhitespace.foreground':           '#e4e4e7',
+        'editorWidget.background':               '#ffffff',
+        'editorWidget.border':                   '#e4e4e7',
+        'input.background':                      '#ffffff',
+        'input.foreground':                      '#18181b',
+        'input.border':                          '#d4d4d8',
+        'focusBorder':                           '#2563eb',
+        'scrollbar.shadow':                      '#00000000',
+        'scrollbarSlider.background':            '#00000015',
+        'scrollbarSlider.hoverBackground':       '#00000025',
+        'scrollbarSlider.activeBackground':      '#00000035',
+        'minimap.background':                    '#fafafa',
+        'minimapSlider.background':              '#00000010',
+        'minimapSlider.hoverBackground':         '#00000020',
+        'minimapSlider.activeBackground':        '#00000028',
+        'editorOverviewRuler.border':            '#fafafa',
+      }
+    }
+  }
+};
+
+function applyTheme(themeId, preview = false, notify = true) {
+  const actualId = THEMES[themeId] ? themeId : 'handbook-neutral';
+  const theme = THEMES[actualId];
+
+  // 1. Update CSS Variables on document root
+  const root = document.documentElement;
+  for (const [k, v] of Object.entries(theme.ui)) {
+    root.style.setProperty(k, v);
+  }
+
+  // 2. Update Monaco Editor Theme
+  if (monacoApi) {
+    monacoApi.editor.setTheme(actualId);
+  }
+
+  // 3. Update Status Bar
+  if (statusTheme) {
+    const shortName = theme.name.split(' (')[0].replace('Handbook ', '');
+    statusTheme.textContent = '🎨 ' + shortName;
+  }
+
+  // 4. Persistence
+  if (!preview) {
+    currentThemeId = actualId;
+    localStorage.setItem('handbook_theme', actualId);
+    if (notify) flash(`Theme: ${theme.name}`);
+  }
+}
 
 // ============================================================
 //  Monaco Initialization
@@ -49,63 +474,16 @@ function initMonaco() {
     require(['vs/editor/editor.main'], function () {
       monacoApi = monaco; // global set by Monaco
 
-      // ---- Aura Midnight Theme ----
-      monacoApi.editor.defineTheme('aura-midnight', {
-        base: 'vs-dark',
-        inherit: true,
-        rules: [
-          { token: 'comment',            foreground: '64748b', fontStyle: 'italic' },
-          { token: 'keyword',            foreground: 'c084fc', fontStyle: 'bold' },
-          { token: 'string',             foreground: '34d399' },
-          { token: 'number',             foreground: 'fbbf24' },
-          { token: 'type',               foreground: '818cf8', fontStyle: 'italic' },
-          { token: 'class',              foreground: '67e8f9' },
-          { token: 'function',           foreground: '38bdf8' },
-          { token: 'variable',           foreground: 'f1f5f9' },
-          { token: 'constant',           foreground: 'f43f5e' },
-          { token: 'operator',           foreground: '38bdf8' },
-          { token: 'tag',                foreground: 'c084fc' },
-          { token: 'attribute.name',     foreground: '67e8f9' },
-          { token: 'attribute.value',    foreground: '34d399' },
-          { token: 'delimiter',          foreground: '94a3b8' },
-          { token: 'metatag',            foreground: 'a855f7' },
-          { token: 'regexp',             foreground: 'f43f5e' },
-        ],
-        colors: {
-          'editor.background':                    '#0d1117',
-          'editor.foreground':                    '#f1f5f9',
-          'editorCursor.foreground':              '#38bdf8',
-          'editor.lineHighlightBackground':       '#151b2a',
-          'editor.selectionBackground':           '#7c3aed45',
-          'editor.inactiveSelectionBackground':   '#7c3aed20',
-          'editorLineNumber.foreground':           '#334155',
-          'editorLineNumber.activeForeground':     '#94a3b8',
-          'editorIndentGuide.background':          '#1e293b',
-          'editorIndentGuide.activeBackground':    '#7c3aed',
-          'editorWhitespace.foreground':           '#1e293b',
-          'editorWidget.background':               '#111624',
-          'editorWidget.border':                   '#1e293b',
-          'input.background':                      '#151b2a',
-          'input.foreground':                      '#f1f5f9',
-          'input.border':                          '#334155',
-          'focusBorder':                           '#8b5cf6',
-          'scrollbar.shadow':                      '#00000000',
-          'scrollbarSlider.background':            '#ffffff12',
-          'scrollbarSlider.hoverBackground':       '#ffffff22',
-          'scrollbarSlider.activeBackground':      '#ffffff30',
-          'minimap.background':                    '#0d1117',
-          'minimapSlider.background':              '#ffffff10',
-          'minimapSlider.hoverBackground':         '#ffffff20',
-          'minimapSlider.activeBackground':        '#ffffff28',
-          'editorOverviewRuler.border':            '#0d1117',
-        },
-      });
+      // Register all theme definitions
+      for (const [id, def] of Object.entries(THEMES)) {
+        monacoApi.editor.defineTheme(id, def.monaco);
+      }
 
       // ---- Create editor ----
       editor = monacoApi.editor.create(monacoEditorEl, {
         value: '',
         language: 'plaintext',
-        theme: 'aura-midnight',
+        theme: currentThemeId,
         fontSize,
         fontFamily: "'SF Mono', Menlo, Monaco, Consolas, monospace",
         fontLigatures: false,
@@ -491,17 +869,24 @@ function toggleMinimap() {
 
 function showGotoPanel(mode) {
   gotoMode = mode;
+  if (mode === 'theme') {
+    preThemeId = currentThemeId;
+  }
   gotoSelectedIndex = 0;
   gotoOverlay.classList.remove('hidden');
   gotoInput.value = mode === 'command' ? '>' : mode === 'line' ? ':' : '';
   gotoInput.placeholder = mode === 'command' ? 'Type a command…'
                         : mode === 'line' ? 'Go to line…'
+                        : mode === 'theme' ? 'Select color theme (↑/↓ to preview)…'
                         : 'Go to File…';
   gotoInput.focus();
   populateGotoResults();
 }
 
-function hideGotoPanel() {
+function hideGotoPanel(cancelled = false) {
+  if (gotoMode === 'theme' && cancelled) {
+    applyTheme(preThemeId, false, false);
+  }
   gotoOverlay.classList.add('hidden');
   gotoMode = null;
   gotoInput.value = '';
@@ -514,7 +899,25 @@ function populateGotoResults() {
   gotoResults.innerHTML = '';
   gotoSelectedIndex = 0;
 
-  if (raw.startsWith('>') || gotoMode === 'command') {
+  if (gotoMode === 'theme') {
+    // ---- Color Theme Picker ----
+    const q = raw.trim().toLowerCase();
+    const themesList = Object.entries(THEMES).map(([id, t]) => ({ id, ...t }));
+    const filtered = q ? themesList.filter((t) => fuzzy(q, t.name.toLowerCase()) || fuzzy(q, t.category.toLowerCase())) : themesList;
+    filtered.forEach((t, i) => {
+      const isCurrent = t.id === currentThemeId;
+      const el = makeResultEl(t.name + (isCurrent ? '  ✓' : ''), t.category, i);
+      el.dataset.themeId = t.id;
+      el.addEventListener('mouseenter', () => {
+        applyTheme(t.id, true);
+      });
+      el.addEventListener('click', () => {
+        applyTheme(t.id, false);
+        hideGotoPanel(false);
+      });
+      gotoResults.appendChild(el);
+    });
+  } else if (raw.startsWith('>') || gotoMode === 'command') {
     // ---- Command Palette ----
     const q = (raw.startsWith('>') ? raw.slice(1) : raw).trim().toLowerCase();
     const cmds = getCommands();
@@ -590,10 +993,32 @@ function updateGotoSelection() {
 function handleGotoKey(e) {
   const items = gotoResults.querySelectorAll('.goto-result');
   switch (e.key) {
-    case 'ArrowDown': e.preventDefault(); gotoSelectedIndex = Math.min(gotoSelectedIndex + 1, items.length - 1); updateGotoSelection(); break;
-    case 'ArrowUp':   e.preventDefault(); gotoSelectedIndex = Math.max(gotoSelectedIndex - 1, 0);               updateGotoSelection(); break;
-    case 'Enter':     e.preventDefault(); items[gotoSelectedIndex]?.click(); break;
-    case 'Escape':    e.preventDefault(); hideGotoPanel(); break;
+    case 'ArrowDown':
+      e.preventDefault();
+      gotoSelectedIndex = Math.min(gotoSelectedIndex + 1, items.length - 1);
+      updateGotoSelection();
+      if (gotoMode === 'theme') {
+        const themeId = items[gotoSelectedIndex]?.dataset.themeId;
+        if (themeId) applyTheme(themeId, true);
+      }
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      gotoSelectedIndex = Math.max(gotoSelectedIndex - 1, 0);
+      updateGotoSelection();
+      if (gotoMode === 'theme') {
+        const themeId = items[gotoSelectedIndex]?.dataset.themeId;
+        if (themeId) applyTheme(themeId, true);
+      }
+      break;
+    case 'Enter':
+      e.preventDefault();
+      items[gotoSelectedIndex]?.click();
+      break;
+    case 'Escape':
+      e.preventDefault();
+      hideGotoPanel(true);
+      break;
   }
 }
 
@@ -610,6 +1035,7 @@ function getCommands() {
     { name: 'Close Tab',                  shortcut: '⌘W',     action: () => closeFile(activeFilePath) },
     { name: 'Toggle Sidebar',             shortcut: '⌘B',     action: () => toggleSidebar() },
     { name: 'Toggle Minimap',             shortcut: '',        action: () => toggleMinimap() },
+    { name: 'Preferences: Color Theme',   shortcut: '',        action: () => showGotoPanel('theme') },
     { name: 'Go to Line…',               shortcut: '⌘G',     action: () => showGotoPanel('line') },
     { name: 'Go to File…',               shortcut: '⌘P',     action: () => showGotoPanel('file') },
     { name: 'Find',                       shortcut: '⌘F',     action: () => editor?.getAction('actions.find')?.run() },
@@ -719,18 +1145,22 @@ function initEvents() {
   // Goto panel
   gotoInput.addEventListener('input', populateGotoResults);
   gotoInput.addEventListener('keydown', handleGotoKey);
-  gotoOverlay.addEventListener('click', (e) => { if (e.target === gotoOverlay) hideGotoPanel(); });
+  gotoOverlay.addEventListener('click', (e) => { if (e.target === gotoOverlay) hideGotoPanel(true); });
+
+  // Status bar theme button
+  statusTheme?.addEventListener('click', () => showGotoPanel('theme'));
 
   // Welcome screen shortcuts
   document.querySelectorAll('.shortcut[data-action]').forEach((el) => {
     el.addEventListener('click', () => {
       const a = el.dataset.action;
-      if (a === 'openFile')        openFileDialog();
-      else if (a === 'openFolder') openFolder();
-      else if (a === 'newFile')    newFile();
-      else if (a === 'gotoFile')   showGotoPanel('file');
-      else if (a === 'commandPalette') showGotoPanel('command');
-      else if (a === 'gotoLine')   showGotoPanel('line');
+      if (a === 'openFile')             openFileDialog();
+      else if (a === 'openFolder')      openFolder();
+      else if (a === 'newFile')         newFile();
+      else if (a === 'gotoFile')        showGotoPanel('file');
+      else if (a === 'commandPalette')  showGotoPanel('command');
+      else if (a === 'gotoLine')        showGotoPanel('line');
+      else if (a === 'themePicker')     showGotoPanel('theme');
     });
   });
 
@@ -746,6 +1176,7 @@ function initEvents() {
       find:            () => editor?.getAction('actions.find')?.run(),
       replace:         () => editor?.getAction('editor.action.startFindReplaceAction')?.run(),
       commandPalette:  () => showGotoPanel('command'),
+      themePicker:     () => showGotoPanel('theme'),
       gotoFile:        () => showGotoPanel('file'),
       gotoLine:        () => showGotoPanel('line'),
       toggleSidebar:   () => toggleSidebar(),
@@ -808,7 +1239,9 @@ function initEvents() {
 // ============================================================
 
 async function initApp() {
+  applyTheme(currentThemeId, false, false);
   await initMonaco();
+  applyTheme(currentThemeId, false, false);
   initEvents();
   updateStatusBar();
   updateTitle();

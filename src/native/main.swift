@@ -220,7 +220,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         window.title = "Handbook"
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.backgroundColor = NSColor(red: 13/255.0, green: 17/255.0, blue: 23/255.0, alpha: 1.0)
+        window.backgroundColor = NSColor(red: 28/255.0, green: 28/255.0, blue: 31/255.0, alpha: 1.0)
         window.minSize = NSSize(width: 800, height: 500)
         window.isReleasedWhenClosed = false
 
@@ -239,7 +239,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         webView = WKWebView(frame: window.contentView!.bounds, configuration: config)
         webView.autoresizingMask = [.width, .height]
         webView.navigationDelegate = self
-        webView.underPageBackgroundColor = NSColor(red: 13/255.0, green: 17/255.0, blue: 23/255.0, alpha: 1.0)
+        webView.underPageBackgroundColor = NSColor(red: 28/255.0, green: 28/255.0, blue: 31/255.0, alpha: 1.0)
         webView.setValue(false, forKey: "drawsBackground")
 
         nativeBridge.webView = webView
@@ -320,13 +320,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         // Edit Menu
         let editMenuItem = NSMenuItem()
         let editMenu = NSMenu(title: "Edit")
-        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
-        editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
+        editMenu.addItem(withTitle: "Undo", action: #selector(UndoManager.undo), keyEquivalent: "z")
+        editMenu.addItem(withTitle: "Redo", action: #selector(UndoManager.redo), keyEquivalent: "Z")
         editMenu.addItem(NSMenuItem.separator())
-        editMenu.addItem(withTitle: "Cut", action: Selector(("cut:")), keyEquivalent: "x")
-        editMenu.addItem(withTitle: "Copy", action: Selector(("copy:")), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "Paste", action: Selector(("paste:")), keyEquivalent: "v")
-        editMenu.addItem(withTitle: "Select All", action: Selector(("selectAll:")), keyEquivalent: "a")
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenu.addItem(NSMenuItem.separator())
         editMenu.addItem(NSMenuItem(title: "Find…", action: #selector(menuFind), keyEquivalent: "f"))
         editMenu.addItem(NSMenuItem(title: "Replace…", action: #selector(menuReplace), keyEquivalent: "h"))
@@ -339,6 +339,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         let cmdPalItem = NSMenuItem(title: "Command Palette…", action: #selector(menuCommandPalette), keyEquivalent: "p")
         cmdPalItem.keyEquivalentModifierMask = [.command, .shift]
         viewMenu.addItem(cmdPalItem)
+        viewMenu.addItem(NSMenuItem(title: "Preferences: Color Theme…", action: #selector(menuThemePicker), keyEquivalent: ""))
         viewMenu.addItem(NSMenuItem.separator())
         viewMenu.addItem(NSMenuItem(title: "Toggle Sidebar", action: #selector(menuToggleSidebar), keyEquivalent: "b"))
         viewMenu.addItem(NSMenuItem.separator())
@@ -375,6 +376,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
     @objc func menuFind()            { triggerAction("find") }
     @objc func menuReplace()         { triggerAction("replace") }
     @objc func menuCommandPalette()  { triggerAction("commandPalette") }
+    @objc func menuThemePicker()     { triggerAction("themePicker") }
     @objc func menuToggleSidebar()   { triggerAction("toggleSidebar") }
     @objc func menuGotoFile()        { triggerAction("gotoFile") }
     @objc func menuGotoLine()        { triggerAction("gotoLine") }

@@ -30,7 +30,7 @@ Most modern editors carry over 120 MB of bundled browser runtimes, spawn 4+ auxi
 - **🪶 Ultra-Lightweight (4.5 MB)**: Down from 125 MB on Electron — a **~96% size reduction**.
 - **⏱ Instant ~25ms Cold Startup**: Instantaneous launch from Spotlight, Launchpad, or Terminal without Chromium boot latency.
 - **🧠 ~25 MB RAM Footprint**: Backed by macOS's native system WebKit, sharing memory with the operating system rather than bundling an isolated Chromium engine.
-- **🎨 Midnight Aesthetic**: High-contrast, distraction-free visual theme with deep obsidian backgrounds (`#0d1117`), electric violet keywords (`#c084fc`), neon cyan functions (`#38bdf8`), and warm amber constants (`#fbbf24`).
+- **🎨 Customizable Themes with Neutral Default**: Features a refined, balanced graphite dark theme (`#1c1c1f`) designed to reduce eye strain, plus an instant interactive theme switcher (`⌘⇧P` -> "Preferences: Color Theme") supporting 5 curated themes (Handbook Neutral, Midnight Slate, Obsidian Black, Warm Coffee, Paper Light) with live arrow-key previews.
 - **🚫 Zero Nag Popups**: No license reminders, registration prompts, or modal interruptions.
 
 ---
@@ -85,6 +85,24 @@ alias handbook="/Applications/Handbook.app/Contents/MacOS/Handbook"
 
 ---
 
+## 🎨 Customizable Themes
+
+Handbook ships with 5 handcrafted color themes, with a balanced, neutral dark theme as the default:
+
+- **Handbook Neutral** *(Default)*: Zinc & graphite charcoal (`#1c1c1f`) with gentle syntax colors for all-day focus.
+- **Midnight Slate**: Deep dark slate (`#0d1117`) with vibrant indigo and cyan accents.
+- **Obsidian Black**: True `#000000` dark theme optimized for OLED displays.
+- **Warm Coffee**: Cozy sepia dark theme with warm espresso tones.
+- **Paper Light**: Crisp, high-contrast light theme with clean neutral paper tones.
+
+### How to Switch Themes
+1. Open the Command Palette with `⌘ ⇧ P`.
+2. Type **Preferences: Color Theme** (or click the `🎨` icon in the bottom status bar).
+3. Use the `↑` and `↓` arrow keys to preview themes instantly in real time.
+4. Press `Enter` to apply or `Escape` to cancel. Your theme choice is automatically persisted.
+
+---
+
 ## ⌨️ Keyboard Shortcuts
 
 Handbook features the classic, muscle-memory shortcuts developers love:
@@ -93,6 +111,7 @@ Handbook features the classic, muscle-memory shortcuts developers love:
 | :--- | :--- |
 | `⌘ P` | **Quick Find File** (fuzzy project search) |
 | `⌘ ⇧ P` | **Command Palette** |
+| `⌘ ⇧ P` → `Theme` | **Preferences: Color Theme** (interactive live preview) |
 | `⌘ G` | **Jump to Line Number** |
 | `⌘ B` | **Toggle Workspace Sidebar** |
 | `⌘ S` | **Save File** (atomic disk write) |
