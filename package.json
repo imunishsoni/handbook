@@ -5,9 +5,13 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron . --dev"
+    "dev": "electron . --dev",
+    "icon": "electron scripts/generate-icon.js",
+    "pack": "electron-packager . 'Sublime Text' --platform=darwin --arch=arm64 --icon=build/icon --out=dist --overwrite --app-bundle-id=com.sublimetext.clone --app-category-type=public.app-category.developer-tools --prune=true",
+    "dmg": "node scripts/build-dmg.js"
   },
   "devDependencies": {
+    "@electron/packager": "^20.3.0",
     "electron": "^28.0.0"
   },
   "dependencies": {
