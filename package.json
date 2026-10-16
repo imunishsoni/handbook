@@ -8,6 +8,7 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "icon": "electron scripts/generate-icon.js",
+    "build:native": "./scripts/build-native.sh",
     "pack": "electron-packager . 'Handbook' --platform=darwin --arch=arm64 --icon=build/icon --out=dist --overwrite --app-bundle-id=com.handbook.editor --app-category-type=public.app-category.developer-tools --prune=true --ignore=^/build --ignore=^/dist",
     "dmg": "node scripts/build-dmg.js"
   },

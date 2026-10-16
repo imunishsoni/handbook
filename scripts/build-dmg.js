@@ -5,15 +5,15 @@ const os = require('os');
 
 const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
-const appPath = path.join(distDir, 'Handbook-darwin-arm64', 'Handbook.app');
+const appPath = path.join(distDir, 'Handbook.app');
 const stagingDir = path.join(os.tmpdir(), 'handbook-dmg-staging-' + Date.now());
-const dmgOutput = path.join(distDir, 'Handbook-arm64.dmg');
-const zipOutput = path.join(distDir, 'Handbook-arm64.zip');
+const dmgOutput = path.join(distDir, 'Handbook-mac-arm64.dmg');
+const zipOutput = path.join(distDir, 'Handbook-mac-arm64.zip');
 
-console.log('1. Checking application bundle at:', appPath);
+console.log('1. Checking native application bundle at:', appPath);
 if (!fs.existsSync(appPath)) {
-  console.log('App not packaged yet, running pack step...');
-  execSync('npm run pack', { cwd: rootDir, stdio: 'inherit' });
+  console.log('Native app not built yet, running native build...');
+  execSync('./scripts/build-native.sh', { cwd: rootDir, stdio: 'inherit' });
 }
 
 console.log('2. Preparing DMG staging directory in temp...');
@@ -25,7 +25,7 @@ fs.mkdirSync(stagingDir, { recursive: true });
 execSync(`cp -R "${appPath}" "${stagingDir}/"`);
 execSync(`ln -s /Applications "${stagingDir}/Applications"`);
 
-console.log('3. Creating compressed DMG image...');
+console.log('3. Creating compressed native DMG image...');
 if (fs.existsSync(dmgOutput)) {
   fs.unlinkSync(dmgOutput);
 }
