@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 
-app.name = 'Aura';
+app.name = 'Handbook';
 
 let mainWindow;
 

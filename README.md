@@ -1,62 +1,63 @@
-# Aura (macOS)
+# Handbook (macOS)
 
 <p align="center">
-  <img src="build/icon.icns" width="128" height="128" alt="Aura Icon" />
+  <img src="build/icon.icns" width="128" height="128" alt="Handbook Icon" />
 </p>
 
 <p align="center">
   <strong>Pure speed. Zero friction.</strong><br>
-  A distraction-free, lightning-fast code editor for macOS with a tailored Midnight aesthetic.
+  A distraction-free, lightning-fast text and code editor for macOS with a tailored Midnight aesthetic.
 </p>
 
 ---
 
 ## 💾 Out-of-the-Box Installation (No Prerequisites)
 
-Aura is a native macOS application bundle. You do **not** need Node.js, npm, or any developer tools to use it:
+Handbook is a standalone native macOS application bundle. You do **not** need Node.js, npm, or any developer tools to install or run it:
 
 ### 1. Download
-👉 **[Download Latest Aura for macOS (Apple Silicon)](https://github.com/imunishsoni/sublime-text-4-clone/releases/latest)**
+👉 **[Download Latest Handbook for macOS (Apple Silicon)](https://github.com/imunishsoni/sublime-text-4-clone/releases/latest)**
 
-- **[Aura-arm64.dmg](https://github.com/imunishsoni/sublime-text-4-clone/releases/download/v1.1.0/Aura-arm64.dmg)** — Drag & drop DMG installer
-- **[Aura-arm64.zip](https://github.com/imunishsoni/sublime-text-4-clone/releases/download/v1.1.0/Aura-arm64.zip)** — Standalone application ZIP
+- **[Handbook-arm64.dmg](https://github.com/imunishsoni/sublime-text-4-clone/releases/download/v1.2.0/Handbook-arm64.dmg)** — Drag & drop DMG installer
+- **[Handbook-arm64.zip](https://github.com/imunishsoni/sublime-text-4-clone/releases/download/v1.2.0/Handbook-arm64.zip)** — Standalone application ZIP
 
 ### 2. Install
-1. Open `Aura-arm64.dmg`.
-2. Drag **Aura** into your **Applications** folder.
-3. Open **Aura** from Spotlight (`⌘ + Space`), Launchpad, or Finder.
+1. Open `Handbook-arm64.dmg`.
+2. Drag **Handbook** into your **Applications** folder.
+3. Open **Handbook** from Spotlight (`⌘ + Space`), Launchpad, or Finder.
 
 ---
 
-## ⚡ Command Line Tool (`aura`)
+## ⚡ Command Line Tool (`handbook`)
 
-Launch Aura right from your Terminal:
+Launch Handbook directly from your Terminal:
 
 ```bash
-# Open Aura
-aura
+# Open Handbook
+handbook
 
 # Open current folder as workspace
-aura .
+handbook .
 
 # Open a specific file
-aura src/index.ts
+handbook src/index.ts
 ```
 
 If not already linked, add this alias to your `~/.zshrc`:
 ```bash
-alias aura="/Applications/Aura.app/Contents/MacOS/Aura"
+alias handbook="/Applications/Handbook.app/Contents/MacOS/Handbook"
 ```
 
 ---
 
-## 🎨 Aura Midnight Theme & Design
+## 🎨 Midnight Theme & Visual Design
 
-- **Deep Obsidian Palette**: Ultra-low distraction `#0d1117` background with refined hairline borders.
+- **Deep Obsidian Background**: Zero-distraction `#0d1117` palette with refined hairline borders.
 - **Electric Violet & Cyan Accents**: High-contrast, easy-on-the-eyes syntax highlighting.
+- **Dimensional App Icon**: Native macOS Big Sur squircle featuring an open handbook motif with illuminated code page etchings.
 - **Sleek Floating Tabs**: Clean segmented tabs with glowing dirty-state indicators.
-- **Glassmorphic Command Palette**: Translucent floating search HUD with blur backing.
-- **No Nag Dialogs**: Zero popups, zero license prompts, zero distractions.
+- **Glassmorphic Command Palette**: Translucent floating search HUD with backdrop blur.
+- **No Nag Dialogs**: Zero popups, zero purchase reminders, zero modal interruptions.
 
 ---
 

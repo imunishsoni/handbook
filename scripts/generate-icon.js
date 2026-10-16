@@ -15,91 +15,100 @@ app.whenReady().then(async () => {
     },
   });
 
-  // Aura Icon: Elegant glowing geometric "A" prism floating in a deep obsidian-indigo rounded squircle
+  // Handbook Icon: Stylized dimensional open handbook with glowing code facets inside an obsidian squircle
   const svg = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
     <defs>
-      <!-- Drop shadows -->
+      <!-- Drop shadow -->
       <filter id="appShadow" x="-20%" y="-20%" width="140%" height="145%">
         <feDropShadow dx="0" dy="28" stdDeviation="34" flood-color="#000000" flood-opacity="0.55" />
       </filter>
 
-      <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="28" result="blur" />
+      <filter id="bookGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="24" result="blur" />
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
 
       <!-- Gradients -->
       <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#141824" />
-        <stop offset="50%" stop-color="#0e111a" />
+        <stop offset="50%" stop-color="#0d111a" />
         <stop offset="100%" stop-color="#07090e" />
       </linearGradient>
 
-      <!-- Ambient radial aura in background -->
-      <radialGradient id="auraGlow" cx="50%" cy="45%" r="55%">
-        <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.32" />
-        <stop offset="60%" stop-color="#06b6d4" stop-opacity="0.10" />
-        <stop offset="100%" stop-color="#0e111a" stop-opacity="0" />
+      <!-- Ambient glow -->
+      <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#6366f1" stop-opacity="0.30" />
+        <stop offset="60%" stop-color="#38bdf8" stop-opacity="0.10" />
+        <stop offset="100%" stop-color="#07090e" stop-opacity="0" />
       </radialGradient>
 
-      <!-- Left leg of A (Cyan to Indigo) -->
-      <linearGradient id="leftLeg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <!-- Left Page (Cyan to Cobalt) -->
+      <linearGradient id="leftPage" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#38bdf8" />
-        <stop offset="45%" stop-color="#6366f1" />
-        <stop offset="100%" stop-color="#4f46e5" />
+        <stop offset="60%" stop-color="#6366f1" />
+        <stop offset="100%" stop-color="#4338ca" />
       </linearGradient>
 
-      <!-- Right leg of A (Violet to Fuchsia) -->
-      <linearGradient id="rightLeg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <!-- Right Page (Violet to Fuchsia) -->
+      <linearGradient id="rightPage" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#a855f7" />
-        <stop offset="60%" stop-color="#ec4899" />
-        <stop offset="100%" stop-color="#f43f5e" />
+        <stop offset="60%" stop-color="#c084fc" />
+        <stop offset="100%" stop-color="#ec4899" />
       </linearGradient>
 
-      <!-- Crossbar / Central crystal (Radiant Mint to Sky Blue) -->
-      <linearGradient id="crossBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <!-- Book Cover Base Layer (Deep Indigo Slate) -->
+      <linearGradient id="bookCover" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1e2438" />
+        <stop offset="100%" stop-color="#0f1422" />
+      </linearGradient>
+
+      <!-- Ribbon Bookmark (Emerald / Mint) -->
+      <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#2dd4bf" />
-        <stop offset="50%" stop-color="#38bdf8" />
-        <stop offset="100%" stop-color="#818cf8" />
-      </linearGradient>
-
-      <!-- Peak facet highlight -->
-      <linearGradient id="peakFacet" x1="50%" y1="0%" x2="50%" y2="100%">
-        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
-        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+        <stop offset="100%" stop-color="#059669" />
       </linearGradient>
     </defs>
 
-    <!-- Base macOS Squircle Container -->
+    <!-- macOS Big Sur Squircle Base -->
     <rect x="96" y="96" width="832" height="832" rx="190" ry="190" fill="url(#bgGrad)" filter="url(#appShadow)" stroke="rgba(255,255,255,0.14)" stroke-width="5"/>
 
-    <!-- Subtle inner glass rim -->
+    <!-- Subtle inner glass highlight -->
     <rect x="100" y="100" width="824" height="824" rx="186" ry="186" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3"/>
 
-    <!-- Soft ambient aura backlight -->
-    <rect x="96" y="96" width="832" height="832" rx="190" ry="190" fill="url(#auraGlow)"/>
+    <!-- Ambient backlight -->
+    <rect x="96" y="96" width="832" height="832" rx="190" ry="190" fill="url(#centerGlow)"/>
 
-    <!-- Decorative grid accents (subtle code editor grid motif) -->
-    <circle cx="512" cy="512" r="260" fill="none" stroke="rgba(99,102,241,0.12)" stroke-width="2" stroke-dasharray="8 12"/>
-    <circle cx="512" cy="512" r="320" fill="none" stroke="rgba(56,189,248,0.08)" stroke-width="1.5" stroke-dasharray="4 8"/>
+    <!-- Handbook Geometric Glyph -->
+    <g filter="url(#bookGlow)">
+      <!-- Book Back Cover / Shadow Plate -->
+      <path d="M 230 330 C 350 310, 480 340, 512 365 C 544 340, 674 310, 794 330 L 794 725 C 674 705, 544 735, 512 760 C 480 735, 350 705, 230 725 Z" fill="url(#bookCover)" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
 
-    <!-- Glowing Geometric "A" Glyph -->
-    <g filter="url(#glow)">
-      <!-- Left Angled Pillar -->
-      <path d="M 512 240 L 420 240 L 250 720 L 370 720 L 460 460 L 512 320 Z" fill="url(#leftLeg)" />
+      <!-- Left Page -->
+      <path d="M 250 320 C 360 300, 480 330, 510 355 L 510 740 C 480 715, 360 685, 250 705 Z" fill="url(#leftPage)"/>
 
-      <!-- Right Angled Pillar -->
-      <path d="M 512 240 L 604 240 L 774 720 L 654 720 L 564 460 L 512 320 Z" fill="url(#rightLeg)" />
+      <!-- Right Page -->
+      <path d="M 514 355 C 544 330, 664 300, 774 320 L 774 705 C 664 685, 544 715, 514 740 Z" fill="url(#rightPage)"/>
 
-      <!-- Central Floating Crystal Crossbeam (chevron angle for futuristic prism vibe) -->
-      <polygon points="340,560 684,560 644,640 380,640" fill="url(#crossBar)" opacity="0.95" />
+      <!-- Page Crease & Spine Shadow -->
+      <line x1="512" y1="350" x2="512" y2="755" stroke="rgba(0,0,0,0.45)" stroke-width="6"/>
 
-      <!-- Inner Apex Prism Diamond Accent -->
-      <polygon points="512,240 560,370 512,420 464,370" fill="url(#peakFacet)" />
+      <!-- Stylized Code Lines on Left Page -->
+      <line x1="290" y1="410" x2="420" y2="410" stroke="#ffffff" stroke-opacity="0.8" stroke-width="10" stroke-linecap="round"/>
+      <line x1="290" y1="460" x2="470" y2="460" stroke="#ffffff" stroke-opacity="0.6" stroke-width="8" stroke-linecap="round"/>
+      <line x1="330" y1="510" x2="450" y2="510" stroke="#ffffff" stroke-opacity="0.6" stroke-width="8" stroke-linecap="round"/>
+      <line x1="330" y1="560" x2="410" y2="560" stroke="#ffffff" stroke-opacity="0.6" stroke-width="8" stroke-linecap="round"/>
+      <line x1="290" y1="610" x2="460" y2="610" stroke="#ffffff" stroke-opacity="0.75" stroke-width="8" stroke-linecap="round"/>
 
-      <!-- Glowing Core Orb in apex -->
-      <circle cx="512" cy="380" r="14" fill="#ffffff" filter="drop-shadow(0 0 16px #38bdf8)" />
+      <!-- Stylized Code Lines on Right Page -->
+      <line x1="550" y1="410" x2="710" y2="410" stroke="#ffffff" stroke-opacity="0.8" stroke-width="10" stroke-linecap="round"/>
+      <line x1="550" y1="460" x2="680" y2="460" stroke="#ffffff" stroke-opacity="0.6" stroke-width="8" stroke-linecap="round"/>
+      <line x1="590" y1="510" x2="730" y2="510" stroke="#ffffff" stroke-opacity="0.6" stroke-width="8" stroke-linecap="round"/>
+      <line x1="590" y1="560" x2="670" y2="560" stroke="#ffffff" stroke-opacity="0.6" stroke-width="8" stroke-linecap="round"/>
+      <line x1="550" y1="610" x2="720" y2="610" stroke="#ffffff" stroke-opacity="0.75" stroke-width="8" stroke-linecap="round"/>
+
+      <!-- Spine Bookmark Ribbon Dropping down -->
+      <polygon points="494,340 530,340 530,785 512,765 494,785" fill="url(#ribbonGrad)" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
     </g>
   </svg>
   `;
@@ -132,7 +141,7 @@ app.whenReady().then(async () => {
   const raw1024 = path.join(buildDir, 'icon_1024.png');
   fs.writeFileSync(raw1024, image.toPNG());
 
-  console.log('Generating multi-resolution iconset...');
+  console.log('Generating Handbook multi-resolution iconset...');
   const sizes = [
     { size: 16, name: 'icon_16x16.png' },
     { size: 32, name: 'icon_16x16@2x.png' },
@@ -153,7 +162,7 @@ app.whenReady().then(async () => {
 
   const icnsPath = path.join(buildDir, 'icon.icns');
   execSync(`iconutil -c icns "${iconsetDir}" -o "${icnsPath}"`);
-  console.log('Generated Aura icon.icns successfully at:', icnsPath);
+  console.log('Generated Handbook icon.icns successfully at:', icnsPath);
 
   app.quit();
 });

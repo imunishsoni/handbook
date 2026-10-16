@@ -5,10 +5,10 @@ const os = require('os');
 
 const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
-const appPath = path.join(distDir, 'Aura-darwin-arm64', 'Aura.app');
-const stagingDir = path.join(os.tmpdir(), 'aura-dmg-staging-' + Date.now());
-const dmgOutput = path.join(distDir, 'Aura-arm64.dmg');
-const zipOutput = path.join(distDir, 'Aura-arm64.zip');
+const appPath = path.join(distDir, 'Handbook-darwin-arm64', 'Handbook.app');
+const stagingDir = path.join(os.tmpdir(), 'handbook-dmg-staging-' + Date.now());
+const dmgOutput = path.join(distDir, 'Handbook-arm64.dmg');
+const zipOutput = path.join(distDir, 'Handbook-arm64.zip');
 
 console.log('1. Checking application bundle at:', appPath);
 if (!fs.existsSync(appPath)) {
@@ -29,7 +29,7 @@ console.log('3. Creating compressed DMG image...');
 if (fs.existsSync(dmgOutput)) {
   fs.unlinkSync(dmgOutput);
 }
-execSync(`hdiutil create -volname "Aura" -srcfolder "${stagingDir}" -ov -format UDZO "${dmgOutput}"`, {
+execSync(`hdiutil create -volname "Handbook" -srcfolder "${stagingDir}" -ov -format UDZO "${dmgOutput}"`, {
   stdio: 'inherit',
 });
 

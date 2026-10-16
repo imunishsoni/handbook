@@ -432,7 +432,7 @@ function updateTitle() {
   if (titlebarDoc) {
     titlebarDoc.textContent = parts.length ? '— ' + parts.join(' / ') : '';
   }
-  document.title = parts.length ? parts.join(' ') + ' — Aura' : 'Aura';
+  document.title = parts.length ? parts.join(' ') + ' — Handbook' : 'Handbook';
 }
 
 function highlightTreeItem() {
@@ -812,7 +812,7 @@ async function initApp() {
   initEvents();
   updateStatusBar();
   updateTitle();
-  console.log('%c✦ Aura ready', 'color: #38bdf8; font-weight: bold; font-size: 14px;');
+  console.log('%c✦ Handbook ready', 'color: #38bdf8; font-weight: bold; font-size: 14px;');
 }
 
 initApp();

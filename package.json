@@ -1,14 +1,14 @@
 {
-  "name": "aura-editor",
-  "productName": "Aura",
+  "name": "handbook",
+  "productName": "Handbook",
   "version": "1.0.0",
-  "description": "Aura — A lightning-fast, distraction-free code editor for macOS",
+  "description": "Handbook — A distraction-free, lightning-fast code and text editor for macOS",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
     "icon": "electron scripts/generate-icon.js",
-    "pack": "electron-packager . 'Aura' --platform=darwin --arch=arm64 --icon=build/icon --out=dist --overwrite --app-bundle-id=com.aura.editor --app-category-type=public.app-category.developer-tools --prune=true --ignore=^/build --ignore=^/dist",
+    "pack": "electron-packager . 'Handbook' --platform=darwin --arch=arm64 --icon=build/icon --out=dist --overwrite --app-bundle-id=com.handbook.editor --app-category-type=public.app-category.developer-tools --prune=true --ignore=^/build --ignore=^/dist",
     "dmg": "node scripts/build-dmg.js"
   },
   "devDependencies": {
