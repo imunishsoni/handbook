@@ -1,12 +1,14 @@
 const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
-const appPath = path.join(distDir, 'Sublime Text-darwin-arm64', 'Sublime Text.app');
-const stagingDir = path.join(rootDir, 'build', 'dmg-staging');
-const dmgOutput = path.join(distDir, 'Sublime-Text-4-arm64.dmg');
+const appPath = path.join(distDir, 'Aura-darwin-arm64', 'Aura.app');
+const stagingDir = path.join(os.tmpdir(), 'aura-dmg-staging-' + Date.now());
+const dmgOutput = path.join(distDir, 'Aura-arm64.dmg');
+const zipOutput = path.join(distDir, 'Aura-arm64.zip');
 
 console.log('1. Checking application bundle at:', appPath);
 if (!fs.existsSync(appPath)) {
@@ -14,7 +16,7 @@ if (!fs.existsSync(appPath)) {
   execSync('npm run pack', { cwd: rootDir, stdio: 'inherit' });
 }
 
-console.log('2. Preparing DMG staging directory...');
+console.log('2. Preparing DMG staging directory in temp...');
 if (fs.existsSync(stagingDir)) {
   fs.rmSync(stagingDir, { recursive: true, force: true });
 }
@@ -27,8 +29,19 @@ console.log('3. Creating compressed DMG image...');
 if (fs.existsSync(dmgOutput)) {
   fs.unlinkSync(dmgOutput);
 }
-execSync(`hdiutil create -volname "Sublime Text" -srcfolder "${stagingDir}" -ov -format UDZO "${dmgOutput}"`, {
+execSync(`hdiutil create -volname "Aura" -srcfolder "${stagingDir}" -ov -format UDZO "${dmgOutput}"`, {
   stdio: 'inherit',
 });
 
-console.log('DMG created successfully at:', dmgOutput);
+// Clean up staging dir
+fs.rmSync(stagingDir, { recursive: true, force: true });
+
+console.log('4. Creating ZIP archive...');
+if (fs.existsSync(zipOutput)) {
+  fs.unlinkSync(zipOutput);
+}
+execSync(`ditto -c -k --sequesterRsrc --keepParent "${appPath}" "${zipOutput}"`);
+
+console.log('Build completed successfully:');
+console.log('  DMG:', dmgOutput);
+console.log('  ZIP:', zipOutput);

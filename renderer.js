@@ -19,6 +19,7 @@ let untitledCounter = 0;
 // ===== DOM refs =====
 const $ = (s) => document.querySelector(s);
 const titlebarTitle     = $('#titlebar-title');
+const titlebarDoc       = $('#titlebar-doc');
 const sidebar           = $('#sidebar');
 const sidebarTitleEl    = $('#sidebar-title');
 const fileTreeEl        = $('#file-tree');
@@ -48,54 +49,55 @@ function initMonaco() {
     require(['vs/editor/editor.main'], function () {
       monacoApi = monaco; // global set by Monaco
 
-      // ---- Monokai-inspired theme ----
-      monacoApi.editor.defineTheme('sublime-monokai', {
+      // ---- Aura Midnight Theme ----
+      monacoApi.editor.defineTheme('aura-midnight', {
         base: 'vs-dark',
         inherit: true,
         rules: [
-          { token: 'comment',            foreground: '88846f', fontStyle: 'italic' },
-          { token: 'keyword',            foreground: 'f92672' },
-          { token: 'string',             foreground: 'e6db74' },
-          { token: 'number',             foreground: 'ae81ff' },
-          { token: 'type',               foreground: '66d9ef', fontStyle: 'italic' },
-          { token: 'class',              foreground: 'a6e22e' },
-          { token: 'function',           foreground: 'a6e22e' },
-          { token: 'variable',           foreground: 'f8f8f2' },
-          { token: 'constant',           foreground: 'ae81ff' },
-          { token: 'operator',           foreground: 'f92672' },
-          { token: 'tag',                foreground: 'f92672' },
-          { token: 'attribute.name',     foreground: 'a6e22e' },
-          { token: 'attribute.value',    foreground: 'e6db74' },
-          { token: 'delimiter',          foreground: 'f8f8f2' },
-          { token: 'metatag',            foreground: 'f92672' },
-          { token: 'regexp',             foreground: 'e6db74' },
+          { token: 'comment',            foreground: '64748b', fontStyle: 'italic' },
+          { token: 'keyword',            foreground: 'c084fc', fontStyle: 'bold' },
+          { token: 'string',             foreground: '34d399' },
+          { token: 'number',             foreground: 'fbbf24' },
+          { token: 'type',               foreground: '818cf8', fontStyle: 'italic' },
+          { token: 'class',              foreground: '67e8f9' },
+          { token: 'function',           foreground: '38bdf8' },
+          { token: 'variable',           foreground: 'f1f5f9' },
+          { token: 'constant',           foreground: 'f43f5e' },
+          { token: 'operator',           foreground: '38bdf8' },
+          { token: 'tag',                foreground: 'c084fc' },
+          { token: 'attribute.name',     foreground: '67e8f9' },
+          { token: 'attribute.value',    foreground: '34d399' },
+          { token: 'delimiter',          foreground: '94a3b8' },
+          { token: 'metatag',            foreground: 'a855f7' },
+          { token: 'regexp',             foreground: 'f43f5e' },
         ],
         colors: {
-          'editor.background':                    '#272822',
-          'editor.foreground':                    '#f8f8f2',
-          'editorCursor.foreground':              '#f8f8f0',
-          'editor.lineHighlightBackground':       '#3e3d32',
-          'editor.selectionBackground':           '#878b9130',
-          'editor.inactiveSelectionBackground':   '#49483e50',
-          'editorLineNumber.foreground':           '#90908a',
-          'editorLineNumber.activeForeground':     '#c2c2bf',
-          'editorIndentGuide.background':          '#464741',
-          'editorWhitespace.foreground':           '#464741',
-          'editorWidget.background':               '#1e1f1c',
-          'editorWidget.border':                   '#2a2a2a',
-          'input.background':                      '#3c3f41',
-          'input.foreground':                      '#f8f8f2',
-          'input.border':                          '#555555',
-          'focusBorder':                           '#66d9ef60',
+          'editor.background':                    '#0d1117',
+          'editor.foreground':                    '#f1f5f9',
+          'editorCursor.foreground':              '#38bdf8',
+          'editor.lineHighlightBackground':       '#151b2a',
+          'editor.selectionBackground':           '#7c3aed45',
+          'editor.inactiveSelectionBackground':   '#7c3aed20',
+          'editorLineNumber.foreground':           '#334155',
+          'editorLineNumber.activeForeground':     '#94a3b8',
+          'editorIndentGuide.background':          '#1e293b',
+          'editorIndentGuide.activeBackground':    '#7c3aed',
+          'editorWhitespace.foreground':           '#1e293b',
+          'editorWidget.background':               '#111624',
+          'editorWidget.border':                   '#1e293b',
+          'input.background':                      '#151b2a',
+          'input.foreground':                      '#f1f5f9',
+          'input.border':                          '#334155',
+          'focusBorder':                           '#8b5cf6',
           'scrollbar.shadow':                      '#00000000',
-          'scrollbarSlider.background':            '#ffffff15',
-          'scrollbarSlider.hoverBackground':       '#ffffff25',
+          'scrollbarSlider.background':            '#ffffff12',
+          'scrollbarSlider.hoverBackground':       '#ffffff22',
           'scrollbarSlider.activeBackground':      '#ffffff30',
-          'minimap.background':                    '#272822',
+          'minimap.background':                    '#0d1117',
           'minimapSlider.background':              '#ffffff10',
           'minimapSlider.hoverBackground':         '#ffffff20',
-          'minimapSlider.activeBackground':        '#ffffff30',
-          'editorOverviewRuler.border':            '#272822',
+          'minimapSlider.activeBackground':        '#ffffff28',
+          'editorOverviewRuler.border':            '#0d1117',
         },
       });
 
@@ -103,7 +105,7 @@ function initMonaco() {
       editor = monacoApi.editor.create(monacoEditorEl, {
         value: '',
         language: 'plaintext',
-        theme: 'sublime-monokai',
+        theme: 'aura-midnight',
         fontSize,
         fontFamily: "'SF Mono', Menlo, Monaco, Consolas, monospace",
         fontLigatures: false,
@@ -425,9 +427,12 @@ function updateTitle() {
     if (f?.modified) parts.push('•');
     parts.push(f?.name || '');
   }
-  if (rootFolderPath) parts.push('— ' + window.nodePath.basename(rootFolderPath));
-  parts.push('— Sublime Text');
-  titlebarTitle.textContent = parts.join(' ');
+  if (rootFolderPath) parts.push(window.nodePath.basename(rootFolderPath));
+
+  if (titlebarDoc) {
+    titlebarDoc.textContent = parts.length ? '— ' + parts.join(' / ') : '';
+  }
+  document.title = parts.length ? parts.join(' ') + ' — Aura' : 'Aura';
 }
 
 function highlightTreeItem() {
@@ -807,7 +812,7 @@ async function initApp() {
   initEvents();
   updateStatusBar();
   updateTitle();
-  console.log('%c✦ Sublime Text Clone ready', 'color: #a6e22e; font-size: 14px;');
+  console.log('%c✦ Aura ready', 'color: #38bdf8; font-weight: bold; font-size: 14px;');
 }
 
 initApp();

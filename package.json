@@ -1,13 +1,14 @@
 {
-  "name": "sublime-clone",
+  "name": "aura-editor",
+  "productName": "Aura",
   "version": "1.0.0",
-  "description": "A Sublime Text 4 inspired code editor",
+  "description": "Aura — A lightning-fast, distraction-free code editor for macOS",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
     "icon": "electron scripts/generate-icon.js",
-    "pack": "electron-packager . 'Sublime Text' --platform=darwin --arch=arm64 --icon=build/icon --out=dist --overwrite --app-bundle-id=com.sublimetext.clone --app-category-type=public.app-category.developer-tools --prune=true",
+    "pack": "electron-packager . 'Aura' --platform=darwin --arch=arm64 --icon=build/icon --out=dist --overwrite --app-bundle-id=com.aura.editor --app-category-type=public.app-category.developer-tools --prune=true --ignore=^/build --ignore=^/dist",
     "dmg": "node scripts/build-dmg.js"
   },
   "devDependencies": {

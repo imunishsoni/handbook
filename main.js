@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 
+app.name = 'Aura';
+
 let mainWindow;
 
 function createWindow() {
@@ -12,7 +14,7 @@ function createWindow() {
     minHeight: 500,
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 15, y: 12 },
-    backgroundColor: '#272822',
+    backgroundColor: '#0d1117',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

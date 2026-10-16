@@ -4,15 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; font-src 'self' data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-  <title>Sublime Text</title>
+  <title>Aura</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- Title Bar (macOS hiddenInset — drag region with traffic light space) -->
+  <!-- Title Bar (macOS hiddenInset with traffic light offset) -->
   <div id="titlebar">
     <div id="titlebar-drag"></div>
-    <span id="titlebar-title">Sublime Text</span>
+    <div id="titlebar-title">
+      <span class="brand-mark">AURA</span>
+      <span id="titlebar-doc"></span>
+    </div>
   </div>
 
   <!-- Main Layout -->
@@ -21,7 +24,7 @@
     <!-- Sidebar -->
     <div id="sidebar">
       <div id="sidebar-header">
-        <span id="sidebar-title">FOLDERS</span>
+        <span id="sidebar-title">Workspace</span>
       </div>
       <div id="file-tree"></div>
     </div>
@@ -41,20 +44,40 @@
         <!-- Welcome Screen -->
         <div id="welcome-screen">
           <div class="welcome-content">
-            <h1>Sublime Text</h1>
-            <p class="welcome-subtitle">A sophisticated text editor for code, markup and prose</p>
+            <svg class="welcome-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="wL" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8"/>
+                  <stop offset="100%" stop-color="#6366f1"/>
+                </linearGradient>
+                <linearGradient id="wR" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#a855f7"/>
+                  <stop offset="100%" stop-color="#ec4899"/>
+                </linearGradient>
+                <linearGradient id="wC" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#2dd4bf"/>
+                  <stop offset="100%" stop-color="#38bdf8"/>
+                </linearGradient>
+              </defs>
+              <path d="M50 18 L40 18 L18 82 L32 82 L44 50 L50 32 Z" fill="url(#wL)" />
+              <path d="M50 18 L60 18 L82 82 L68 82 L56 50 L50 32 Z" fill="url(#wR)" />
+              <polygon points="28,62 72,62 68,72 32,72" fill="url(#wC)" />
+              <circle cx="50" cy="38" r="3.5" fill="#ffffff" />
+            </svg>
+            <h1>Aura</h1>
+            <p class="welcome-subtitle">Pure speed. Zero friction.</p>
             <div class="welcome-shortcuts">
               <div class="shortcut-group">
-                <h3>Start</h3>
+                <h3>Workspace</h3>
+                <div class="shortcut" data-action="openFolder"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>O</kbd><span>Open Project Folder</span></div>
                 <div class="shortcut" data-action="openFile"><kbd>⌘</kbd><kbd>O</kbd><span>Open File</span></div>
-                <div class="shortcut" data-action="openFolder"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>O</kbd><span>Open Folder</span></div>
-                <div class="shortcut" data-action="newFile"><kbd>⌘</kbd><kbd>N</kbd><span>New File</span></div>
+                <div class="shortcut" data-action="newFile"><kbd>⌘</kbd><kbd>N</kbd><span>New Draft</span></div>
               </div>
               <div class="shortcut-group">
-                <h3>Navigate</h3>
-                <div class="shortcut" data-action="gotoFile"><kbd>⌘</kbd><kbd>P</kbd><span>Go to File</span></div>
+                <h3>Commands</h3>
+                <div class="shortcut" data-action="gotoFile"><kbd>⌘</kbd><kbd>P</kbd><span>Quick Find File</span></div>
                 <div class="shortcut" data-action="commandPalette"><kbd>⌘</kbd><kbd>⇧</kbd><kbd>P</kbd><span>Command Palette</span></div>
-                <div class="shortcut" data-action="gotoLine"><kbd>⌘</kbd><kbd>G</kbd><span>Go to Line</span></div>
+                <div class="shortcut" data-action="gotoLine"><kbd>⌘</kbd><kbd>G</kbd><span>Jump to Line</span></div>
               </div>
             </div>
           </div>
@@ -85,7 +108,7 @@
   <!-- Go-To Overlay (⌘P / ⌘⇧P / ⌘G) -->
   <div id="goto-overlay" class="hidden">
     <div id="goto-panel">
-      <input type="text" id="goto-input" placeholder="Go to File…" autocomplete="off" spellcheck="false">
+      <input type="text" id="goto-input" placeholder="Search files or commands…" autocomplete="off" spellcheck="false">
       <div id="goto-results"></div>
     </div>
   </div>

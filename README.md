@@ -1,80 +1,87 @@
-# Sublime Text 4 Clone (macOS)
+# Aura (macOS)
 
-A personal, lightweight Sublime Text 4 standalone desktop application for macOS built with Electron and Monaco Editor. It delivers the authentic Monokai aesthetics, speed, and keyboard shortcuts without any purchase reminders or periodic unregistered popups.
+<p align="center">
+  <img src="build/icon.icns" width="128" height="128" alt="Aura Icon" />
+</p>
 
-**No Node.js, npm, or developer tools required to use.**
+<p align="center">
+  <strong>Pure speed. Zero friction.</strong><br>
+  A distraction-free, lightning-fast code editor for macOS with a tailored Midnight aesthetic.
+</p>
 
 ---
 
 ## 💾 Out-of-the-Box Installation (No Prerequisites)
 
-You do **not** need Node.js or npm to run this application. Prebuilt standalone binaries are provided directly in GitHub Releases:
+Aura is a native macOS application bundle. You do **not** need Node.js, npm, or any developer tools to use it:
 
 ### 1. Download
-👉 **[Download the Latest DMG Installer (v1.0.0)](https://github.com/imunishsoni/sublime-text-4-clone/releases/latest)**
+👉 **[Download Latest Aura for macOS (Apple Silicon)](https://github.com/imunishsoni/sublime-text-4-clone/releases/latest)**
 
-*(Available as `Sublime-Text-4-arm64.dmg` or `Sublime-Text-4-arm64.zip` for Apple Silicon Macs)*
+- **[Aura-arm64.dmg](https://github.com/imunishsoni/sublime-text-4-clone/releases/download/v1.1.0/Aura-arm64.dmg)** — Drag & drop DMG installer
+- **[Aura-arm64.zip](https://github.com/imunishsoni/sublime-text-4-clone/releases/download/v1.1.0/Aura-arm64.zip)** — Standalone application ZIP
 
 ### 2. Install
-1. Open the downloaded `Sublime-Text-4-arm64.dmg`.
-2. Drag **Sublime Text** into your **Applications** folder.
-3. Launch **Sublime Text** from Launchpad, Spotlight (`⌘ + Space`), or your Applications folder.
+1. Open `Aura-arm64.dmg`.
+2. Drag **Aura** into your **Applications** folder.
+3. Open **Aura** from Spotlight (`⌘ + Space`), Launchpad, or Finder.
 
 ---
 
-## ⚡ Command Line Tool (`subl`)
+## ⚡ Command Line Tool (`aura`)
 
-To launch Sublime Text from anywhere in your Terminal:
+Launch Aura right from your Terminal:
 
 ```bash
-# Open editor
-subl
+# Open Aura
+aura
 
-# Open current folder as project
-subl .
+# Open current folder as workspace
+aura .
 
 # Open a specific file
-subl path/to/file.py
+aura src/index.ts
 ```
 
-If not already linked, add this to your `~/.zshrc`:
+If not already linked, add this alias to your `~/.zshrc`:
 ```bash
-alias subl="/Applications/Sublime\ Text.app/Contents/MacOS/Sublime\ Text"
+alias aura="/Applications/Aura.app/Contents/MacOS/Aura"
 ```
 
 ---
 
-## ✨ Features
+## 🎨 Aura Midnight Theme & Design
 
-- **No Nag Popups**: Zero purchase prompts or periodic unregistered dialogs.
-- **Iconic Monokai Look & Feel**: Sublime Text 4 dark theme palette, typography, status bar, and tab indicators.
-- **Tabs with Dirty State**: Classic circular dot when a file has unsaved changes, turning to a close button on hover.
-- **Sidebar & File Tree**: Collapsible directories, resizable sidebar pane (with `⌘B` toggle).
-- **Command Palette (`⌘⇧P`)**: Fuzzy search over editor commands.
-- **Go to File (`⌘P`)**: Instant fuzzy file navigation across the workspace.
-- **Go to Line (`⌘G`)**: Direct line jumping.
-- **Sublime Keybindings**:
-  - `⌘P` — Go to File
-  - `⌘⇧P` — Command Palette
-  - `⌘G` — Go to Line
-  - `⌘B` — Toggle Sidebar
-  - `⌘S` — Save
-  - `⌘W` — Close Tab
-  - `⌘N` — New File
-  - `⌘O` — Open File
-  - `⌘⇧D` — Duplicate Line
-  - `⌘D` — Add Selection to Next Find Match
-  - `⌘⇧L` — Select All Occurrences
-  - `⌘/` — Toggle Comment
-  - `⌥↑` / `⌥↓` — Move Line Up / Down
-- **Minimap**: High-performance minimap with toggle support.
-- **Drag & Drop**: Drag files and folders straight into the editor to open them.
+- **Deep Obsidian Palette**: Ultra-low distraction `#0d1117` background with refined hairline borders.
+- **Electric Violet & Cyan Accents**: High-contrast, easy-on-the-eyes syntax highlighting.
+- **Sleek Floating Tabs**: Clean segmented tabs with glowing dirty-state indicators.
+- **Glassmorphic Command Palette**: Translucent floating search HUD with blur backing.
+- **No Nag Dialogs**: Zero popups, zero license prompts, zero distractions.
 
 ---
 
-## 🛠 Building From Source (Developers Only)
+## ⌨️ Shortcuts & Workflows
 
-If you wish to modify the code and package it yourself:
+| Shortcut | Action |
+| :--- | :--- |
+| `⌘ P` | **Quick Find File** (fuzzy project search) |
+| `⌘ ⇧ P` | **Command Palette** |
+| `⌘ G` | **Jump to Line** |
+| `⌘ B` | **Toggle Sidebar** |
+| `⌘ S` | **Save File** |
+| `⌘ W` | **Close Tab** |
+| `⌘ N` | **New Draft** |
+| `⌘ O` | **Open File** |
+| `⌘ ⇧ O` | **Open Workspace Folder** |
+| `⌘ D` | **Add Selection to Next Match** (multi-cursor) |
+| `⌘ ⇧ L` | **Select All Occurrences** |
+| `⌘ /` | **Toggle Line Comment** |
+| `⌥ ↑` / `⌥ ↓` | **Move Line Up / Down** |
+| `⌘ ⇧ D` | **Duplicate Line** |
+
+---
+
+## 🛠 Building From Source
 
 ```bash
 git clone https://github.com/imunishsoni/sublime-text-4-clone.git
@@ -84,9 +91,12 @@ npm install
 # Run in development mode
 npm start
 
-# Package standalone macOS .app
+# Generate custom app icon
+npm run icon
+
+# Package native macOS app (.app)
 npm run pack
 
-# Build .dmg installer
+# Build standalone DMG & ZIP installers
 npm run dmg
 ```

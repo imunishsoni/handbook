@@ -15,51 +15,92 @@ app.whenReady().then(async () => {
     },
   });
 
+  // Aura Icon: Elegant glowing geometric "A" prism floating in a deep obsidian-indigo rounded squircle
   const svg = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
     <defs>
-      <!-- Squircle Clip -->
-      <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
-        <feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#000000" flood-opacity="0.45" />
+      <!-- Drop shadows -->
+      <filter id="appShadow" x="-20%" y="-20%" width="140%" height="145%">
+        <feDropShadow dx="0" dy="28" stdDeviation="34" flood-color="#000000" flood-opacity="0.55" />
       </filter>
-      
-      <!-- Linear Gradients for 3D S Ribbon -->
-      <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="#34373c" />
-        <stop offset="100%" stop-color="#1e2023" />
+
+      <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="28" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+
+      <!-- Gradients -->
+      <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#141824" />
+        <stop offset="50%" stop-color="#0e111a" />
+        <stop offset="100%" stop-color="#07090e" />
       </linearGradient>
 
-      <linearGradient id="topStripe" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#FFAB40" />
-        <stop offset="100%" stop-color="#FF5722" />
+      <!-- Ambient radial aura in background -->
+      <radialGradient id="auraGlow" cx="50%" cy="45%" r="55%">
+        <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.32" />
+        <stop offset="60%" stop-color="#06b6d4" stop-opacity="0.10" />
+        <stop offset="100%" stop-color="#0e111a" stop-opacity="0" />
+      </radialGradient>
+
+      <!-- Left leg of A (Cyan to Indigo) -->
+      <linearGradient id="leftLeg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#38bdf8" />
+        <stop offset="45%" stop-color="#6366f1" />
+        <stop offset="100%" stop-color="#4f46e5" />
       </linearGradient>
 
-      <linearGradient id="midStripe" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#FF8A65" />
-        <stop offset="100%" stop-color="#D84315" />
+      <!-- Right leg of A (Violet to Fuchsia) -->
+      <linearGradient id="rightLeg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#a855f7" />
+        <stop offset="60%" stop-color="#ec4899" />
+        <stop offset="100%" stop-color="#f43f5e" />
       </linearGradient>
 
-      <linearGradient id="botStripe" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#FF7043" />
-        <stop offset="100%" stop-color="#BF360C" />
+      <!-- Crossbar / Central crystal (Radiant Mint to Sky Blue) -->
+      <linearGradient id="crossBar" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#2dd4bf" />
+        <stop offset="50%" stop-color="#38bdf8" />
+        <stop offset="100%" stop-color="#818cf8" />
+      </linearGradient>
+
+      <!-- Peak facet highlight -->
+      <linearGradient id="peakFacet" x1="50%" y1="0%" x2="50%" y2="100%">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
       </linearGradient>
     </defs>
 
-    <!-- App Icon Base Squircle (macOS standard curvature) -->
-    <rect x="96" y="96" width="832" height="832" rx="185" ry="185" fill="url(#bgGrad)" filter="url(#shadow)" stroke="rgba(255,255,255,0.12)" stroke-width="6"/>
+    <!-- Base macOS Squircle Container -->
+    <rect x="96" y="96" width="832" height="832" rx="190" ry="190" fill="url(#bgGrad)" filter="url(#appShadow)" stroke="rgba(255,255,255,0.14)" stroke-width="5"/>
 
-    <!-- Subtle inner highlight border -->
-    <rect x="99" y="99" width="826" height="826" rx="182" ry="182" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+    <!-- Subtle inner glass rim -->
+    <rect x="100" y="100" width="824" height="824" rx="186" ry="186" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3"/>
 
-    <!-- Sublime "S" Layered Ribbons -->
-    <!-- Top folded segment -->
-    <path d="M 280 270 L 680 340 L 750 450 L 350 380 Z" fill="url(#topStripe)" filter="drop-shadow(0 6px 12px rgba(0,0,0,0.35))" />
+    <!-- Soft ambient aura backlight -->
+    <rect x="96" y="96" width="832" height="832" rx="190" ry="190" fill="url(#auraGlow)"/>
 
-    <!-- Center connecting folded segment -->
-    <path d="M 330 430 L 730 500 L 670 620 L 270 550 Z" fill="url(#midStripe)" filter="drop-shadow(0 6px 14px rgba(0,0,0,0.4))" />
+    <!-- Decorative grid accents (subtle code editor grid motif) -->
+    <circle cx="512" cy="512" r="260" fill="none" stroke="rgba(99,102,241,0.12)" stroke-width="2" stroke-dasharray="8 12"/>
+    <circle cx="512" cy="512" r="320" fill="none" stroke="rgba(56,189,248,0.08)" stroke-width="1.5" stroke-dasharray="4 8"/>
 
-    <!-- Bottom folded segment -->
-    <path d="M 290 600 L 690 670 L 740 760 L 340 690 Z" fill="url(#botStripe)" filter="drop-shadow(0 8px 16px rgba(0,0,0,0.45))" />
+    <!-- Glowing Geometric "A" Glyph -->
+    <g filter="url(#glow)">
+      <!-- Left Angled Pillar -->
+      <path d="M 512 240 L 420 240 L 250 720 L 370 720 L 460 460 L 512 320 Z" fill="url(#leftLeg)" />
+
+      <!-- Right Angled Pillar -->
+      <path d="M 512 240 L 604 240 L 774 720 L 654 720 L 564 460 L 512 320 Z" fill="url(#rightLeg)" />
+
+      <!-- Central Floating Crystal Crossbeam (chevron angle for futuristic prism vibe) -->
+      <polygon points="340,560 684,560 644,640 380,640" fill="url(#crossBar)" opacity="0.95" />
+
+      <!-- Inner Apex Prism Diamond Accent -->
+      <polygon points="512,240 560,370 512,420 464,370" fill="url(#peakFacet)" />
+
+      <!-- Glowing Core Orb in apex -->
+      <circle cx="512" cy="380" r="14" fill="#ffffff" filter="drop-shadow(0 0 16px #38bdf8)" />
+    </g>
   </svg>
   `;
 
@@ -79,13 +120,11 @@ app.whenReady().then(async () => {
   `;
 
   await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-
-  // Wait for render
-  await new Promise(r => setTimeout(r, 500));
+  await new Promise(r => setTimeout(r, 600));
 
   const image = await win.webContents.capturePage();
-  const iconsetDir = path.join(__dirname, '../build/icon.iconset');
   const buildDir = path.join(__dirname, '../build');
+  const iconsetDir = path.join(buildDir, 'icon.iconset');
 
   if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir, { recursive: true });
   if (!fs.existsSync(iconsetDir)) fs.mkdirSync(iconsetDir, { recursive: true });
@@ -93,8 +132,7 @@ app.whenReady().then(async () => {
   const raw1024 = path.join(buildDir, 'icon_1024.png');
   fs.writeFileSync(raw1024, image.toPNG());
 
-  console.log('Saved 1024x1024 PNG, generating iconset...');
-
+  console.log('Generating multi-resolution iconset...');
   const sizes = [
     { size: 16, name: 'icon_16x16.png' },
     { size: 32, name: 'icon_16x16@2x.png' },
@@ -115,7 +153,7 @@ app.whenReady().then(async () => {
 
   const icnsPath = path.join(buildDir, 'icon.icns');
   execSync(`iconutil -c icns "${iconsetDir}" -o "${icnsPath}"`);
-  console.log('Generated icon.icns successfully at', icnsPath);
+  console.log('Generated Aura icon.icns successfully at:', icnsPath);
 
   app.quit();
 });

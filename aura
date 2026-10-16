@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Aura CLI Launcher
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP="/Applications/Aura.app/Contents/MacOS/Aura"
+LOCAL_ELECTRON="$DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+
+if [ -f "$APP" ]; then
+  if [ "$1" == "" ]; then
+    exec "$APP" &
+  else
+    exec "$APP" "$@" &
+  fi
+elif [ -f "$LOCAL_ELECTRON" ]; then
+  if [ "$1" == "" ]; then
+    exec "$LOCAL_ELECTRON" "$DIR" &
+  else
+    exec "$LOCAL_ELECTRON" "$DIR" "$@" &
+  fi
+else
+  echo "Error: Neither Aura.app nor Electron runtime could be found." >&2
+  exit 1
+fi
