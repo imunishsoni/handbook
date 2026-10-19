@@ -1,7 +1,7 @@
 {
   "name": "handbook",
   "productName": "Handbook",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Handbook — A distraction-free, lightning-fast code and text editor for macOS",
   "main": "main.js",
   "scripts": {

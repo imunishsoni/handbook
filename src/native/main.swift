@@ -238,8 +238,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
 
         webView = WKWebView(frame: window.contentView!.bounds, configuration: config)
         webView.autoresizingMask = [.width, .height]
-        webView.navigationDelegate = self
-        webView.underPageBackgroundColor = NSColor(red: 28/255.0, green: 28/255.0, blue: 31/255.0, alpha: 1.0)
+        if #available(macOS 12.0, *) {
+            webView.underPageBackgroundColor = NSColor(red: 28/255.0, green: 28/255.0, blue: 31/255.0, alpha: 1.0)
+        }
         webView.setValue(false, forKey: "drawsBackground")
 
         nativeBridge.webView = webView

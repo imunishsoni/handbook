@@ -6,15 +6,16 @@
 
 <p align="center">
   <strong>Pure machine speed. Ultra-lightweight. Zero friction.</strong><br>
-  A high-performance text and code editor for macOS compiled directly to Apple Silicon ARM64 machine code.
+  A high-performance text and code editor for macOS compiled directly to native machine code.<br>
+  Universal 2 binary running natively on both <strong>Apple Silicon</strong> and <strong>Intel</strong> chips across macOS 10.15 (Catalina) through macOS 15+ (Sequoia).
 </p>
 
 <p align="center">
   <a href="https://github.com/imunishsoni/handbook/releases/latest"><img src="https://img.shields.io/github/v/release/imunishsoni/handbook?style=flat-square&color=38bdf8" alt="Latest Release" /></a>
   <a href="https://github.com/imunishsoni/handbook/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License" /></a>
-  <img src="https://img.shields.io/badge/platform-macOS%2012.0+-black.svg?style=flat-square&logo=apple" alt="macOS" />
-  <img src="https://img.shields.io/badge/architecture-Apple%20Silicon%20ARM64-6366f1.svg?style=flat-square" alt="Apple Silicon ARM64" />
-  <img src="https://img.shields.io/badge/installer-4.5%20MB-emerald.svg?style=flat-square" alt="Size: 4.5 MB" />
+  <img src="https://img.shields.io/badge/platform-macOS%2010.15+-black.svg?style=flat-square&logo=apple" alt="macOS 10.15+" />
+  <img src="https://img.shields.io/badge/architecture-Universal%202%20(Apple%20%2B%20Intel)-6366f1.svg?style=flat-square" alt="Universal 2" />
+  <img src="https://img.shields.io/badge/installer-4.4%20MB-emerald.svg?style=flat-square" alt="Size: 4.4 MB" />
   <img src="https://img.shields.io/badge/startup-~25ms-amber.svg?style=flat-square" alt="Startup: ~25ms" />
 </p>
 
@@ -26,21 +27,26 @@ Most modern editors carry over 120 MB of bundled browser runtimes, spawn 4+ auxi
 
 **Handbook** is built differently:
 
-- **⚡ Direct Machine Code Core**: Compiled with `swiftc -O -whole-module-optimization` for Apple Silicon ARM64. File scanning, directory crawling, and atomic disk writes run directly on bare metal CPU registers via POSIX and Cocoa Foundation APIs.
-- **🪶 Ultra-Lightweight (4.5 MB)**: Down from 125 MB on Electron — a **~96% size reduction**.
+- **⚡ Direct Machine Code Core**: Compiled with `swiftc -O -whole-module-optimization` as an Apple **Universal 2** binary. File scanning, directory crawling, and atomic disk writes run directly on bare metal CPU registers via POSIX and Cocoa Foundation APIs.
+- **💻 Universal Hardware Compatibility**: Contains native Mach-O machine code slices for both **Apple Silicon** (M1, M2, M3, M4, Pro, Max, Ultra) and **Intel** (Core i3, i5, i7, i9, Xeon) Macs — zero emulation overhead.
+- **🖥 Broad macOS Version Support**: Runs out-of-the-box on older macOS releases (macOS 10.15 Catalina, macOS 11 Big Sur, macOS 12 Monterey, macOS 13 Ventura) and modern releases (macOS 14 Sonoma, macOS 15+ Sequoia).
+- **🪶 Ultra-Lightweight (4.4 MB)**: Down from 125 MB on Electron — a **~96% size reduction**.
 - **⏱ Instant ~25ms Cold Startup**: Instantaneous launch from Spotlight, Launchpad, or Terminal without Chromium boot latency.
 - **🧠 ~25 MB RAM Footprint**: Backed by macOS's native system WebKit, sharing memory with the operating system rather than bundling an isolated Chromium engine.
 - **🎨 Customizable Themes with Neutral Default**: Features a refined, balanced graphite dark theme (`#1c1c1f`) designed to reduce eye strain, plus an instant interactive theme switcher (`⌘⇧P` -> "Preferences: Color Theme") supporting 5 curated themes (Handbook Neutral, Midnight Slate, Obsidian Black, Warm Coffee, Paper Light) with live arrow-key previews.
+- **⌨️ Sublime Text 4 Keymap**: Complete, 1:1 muscle memory compatibility including multi-cursor (`⌘D`, `⌃⌘G`, `⌘⇧L`), line operations (`⌘⇧D`, `⌘⇧K`, `⌘⌃↑/↓`), Go to Symbol (`⌘R`), and chords (`⌘K ...`).
 - **🚫 Zero Nag Popups**: No license reminders, registration prompts, or modal interruptions.
 
 ---
 
-## 📊 Performance Benchmarks
+## 📊 Performance & Compatibility Benchmarks
 
-| Metric | Typical Electron Editor | **Handbook v2.0 (Native)** | Advantage |
+| Metric | Typical Electron Editor | **Handbook v2.3 (Native Universal 2)** | Advantage |
 | :--- | :--- | :--- | :--- |
-| **DMG Installer Size** | ~122 MB | **4.46 MB** | **~96% smaller** |
-| **Standalone App Size** | ~107 MB | **3.90 MB** | **~96% smaller** |
+| **Architectures** | Single architecture / Heavy | **Apple Silicon (ARM64) + Intel (x86_64)** | Dual native execution |
+| **macOS Compatibility** | Often drops older OS | **macOS 10.15 Catalina → macOS 15+ Sequoia** | Old & new Mac support |
+| **DMG Installer Size** | ~122 MB | **4.45 MB** | **~96% smaller** |
+| **Standalone App Size** | ~107 MB | **3.98 MB** | **~96% smaller** |
 | **Cold Startup Time** | ~1,800 – 2,400 ms | **~25 ms** | **~80× faster** |
 | **Idle Memory (RAM)** | ~220 – 300 MB | **~25 – 35 MB** | **~8× less memory** |
 | **Process Count** | 4 separate processes | **1 single native process** | Minimal overhead |
@@ -53,13 +59,20 @@ Most modern editors carry over 120 MB of bundled browser runtimes, spawn 4+ auxi
 
 ### 1-Click DMG Install (No Prerequisites)
 
-No Node.js, npm, or dev tools required to use Handbook:
+No Node.js, npm, or dev tools required to use Handbook. Choose the installer that best fits your Mac:
 
-1. Download **[Handbook-mac-arm64.dmg](https://github.com/imunishsoni/handbook/releases/latest/download/Handbook-mac-arm64.dmg)** (4.5 MB).
+| Target | Recommended Package | Architecture | Size |
+| :--- | :--- | :--- | :--- |
+| **All Macs (Universal)** | **[Handbook-mac-universal.dmg](https://github.com/imunishsoni/handbook/releases/latest/download/Handbook-mac-universal.dmg)** | Apple Silicon + Intel (macOS 10.15+) | **4.4 MB** |
+| **Apple Silicon Only** | **[Handbook-mac-arm64.dmg](https://github.com/imunishsoni/handbook/releases/latest/download/Handbook-mac-arm64.dmg)** | M1 / M2 / M3 / M4 (macOS 11.0+) | **4.4 MB** |
+| **Intel Mac Only** | **[Handbook-mac-x86_64.dmg](https://github.com/imunishsoni/handbook/releases/latest/download/Handbook-mac-x86_64.dmg)** | Intel Core / Xeon (macOS 10.15+) | **4.4 MB** |
+
+> *Portable `.zip` archives are also available: [Universal.zip](https://github.com/imunishsoni/handbook/releases/latest/download/Handbook-mac-universal.zip), [ARM64.zip](https://github.com/imunishsoni/handbook/releases/latest/download/Handbook-mac-arm64.zip), and [x86_64.zip](https://github.com/imunishsoni/handbook/releases/latest/download/Handbook-mac-x86_64.zip).*
+
+#### Steps:
+1. Download **[Handbook-mac-universal.dmg](https://github.com/imunishsoni/handbook/releases/latest/download/Handbook-mac-universal.dmg)**.
 2. Open the disk image and drag **Handbook** into your **Applications** folder.
 3. Open **Handbook** from Spotlight (`⌘ + Space`), Launchpad, or Finder.
-
-> *Alternatively, grab the standalone [Handbook-mac-arm64.zip](https://github.com/imunishsoni/handbook/releases/latest/download/Handbook-mac-arm64.zip) (3.9 MB).*
 
 ---
 
@@ -78,8 +91,13 @@ handbook .
 handbook src/main.rs
 ```
 
-To enable the `handbook` command globally, add this to your `~/.zshrc`:
+To enable the `handbook` command globally, create a symlink or add an alias to your `~/.zshrc`:
+
 ```bash
+# Option A: Symlink bundled launcher (recommended)
+sudo ln -sf "/Applications/Handbook.app/Contents/SharedSupport/bin/handbook" /usr/local/bin/handbook
+
+# Option B: Shell alias
 alias handbook="/Applications/Handbook.app/Contents/MacOS/Handbook"
 ```
 

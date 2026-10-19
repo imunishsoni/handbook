@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] - 2026-10-19
+
+### 🍎 Universal 2 Architecture & Broad macOS Compatibility
+- **Universal 2 Mach-O Binary**: Compiled into an Apple Universal 2 fat binary packing native machine code slices for both **Apple Silicon** (M1/M2/M3/M4, Pro, Max, Ultra) and **Intel** (Core i3/i5/i7/i9, Xeon) Macs — zero emulation required on either platform.
+- **Broad macOS Compatibility (10.15 Catalina → 15+ Sequoia)**:
+  - Supports older Intel Macs on macOS 10.15 (Catalina), 11 (Big Sur), 12 (Monterey), and 13 (Ventura).
+  - Supports Apple Silicon Macs on macOS 11 (Big Sur) through macOS 15+ (Sequoia).
+- **Graceful API Back-deployment**: Added runtime `#available(macOS 12.0, *)` guards and an x86_64 compatibility shim (`compat_x86_64.s`) to prevent missing symbol errors when back-deploying to older macOS targets.
+- **Bundled CLI Launcher**: Included native command-line launcher at `Handbook.app/Contents/SharedSupport/bin/handbook` for effortless `/usr/local/bin` symlinking.
+- **Universal Packaging**:
+  - `Handbook-mac-universal.dmg`: Single unified DMG installer that works on all Macs.
+  - `Handbook-mac-arm64.dmg` & `Handbook-mac-x86_64.dmg`: Architecture-labeled installers for automated workflows and target-specific downloads.
+  - Universal and target-specific `.zip` portable archives.
+
+---
+
 ## [2.2.0] - 2026-10-19
 
 ### ⌨️ Sublime Text 4 Keymap & Navigation
