@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2026-10-19
+
+### ⌨️ Sublime Text 4 Keymap & Navigation
+- **Comprehensive Sublime Text 4 Muscle Memory**: Implemented exact 1:1 macOS Sublime Text 4 keybindings across Monaco Editor, native menus, and global handlers.
+- **Go to Symbol (`⌘R` / `@`)**: Fast zero-dependency symbol indexing and jump navigation for functions, classes, methods, interfaces, and headings across JS/TS, Python, Swift, Go, Rust, Ruby, C/C++, and Markdown.
+- **Multi-Cursor & Selection Enhancements**:
+  - `⌘D`: Quick Add Next occurrence
+  - `⌘K ⌘D`: Skip Next occurrence
+  - `⌃⌘G`: Quick Find All / Select all occurrences
+  - `⌘⇧L`: Split multi-line selection into individual cursors per line
+  - `⌘L`: Expand selection to current line (press repeatedly to expand downward)
+  - `⌃M`: Jump to matching bracket
+  - `⌃⇧M`: Select to matching bracket
+  - `⌘⌥↑` / `⌘⌥↓` & `⌃⇧↑` / `⌃⇧↓`: Add multi-cursor above / below
+  - `⌘U` / `⌘⇧U`: Soft undo / redo cursor positions
+- **Line Editing & Structural Transforms**:
+  - `⌘⇧D`: Duplicate line or selection
+  - `⌘⇧K` / `⌃⇧K`: Delete line
+  - `⌘⌃↑` / `⌘⌃↓` & `⌥↑` / `⌥↓`: Move line / selection up or down
+  - `⌘J`: Join lines
+  - `⌘↵`: Insert line below without splitting current line
+  - `⌘⇧↵`: Insert line above
+  - `⌘]` / `⌘[`: Indent / Outdent line or selection
+  - `⌘K ⌘K` / `⌃K`: Delete to end of line (EOL)
+  - `⌘K ⌘⌫`: Delete to beginning of line (BOL)
+  - `⌘K ⌘U` / `⌘K ⌘L`: Transform selection to uppercase / lowercase
+  - `⌃T`: Transpose adjacent characters
+  - `F5` / `⌃F5`: Sort lines ascending / descending (case-sensitive)
+- **Code Folding & Comments**:
+  - `⌘/`: Toggle line comment
+  - `⌥⌘/` / `⌘⇧/`: Toggle block comment
+  - `⌥⌘[` / `⌥⌘]`: Fold / Unfold current code block
+  - `⌘K ⌘1`: Fold all top-level blocks
+  - `⌘K ⌘J`: Unfold all blocks
+- **Tab & Window Navigation**:
+  - `⌥⌘→` / `⌥⌘←` & `⌃⇥` / `⌃⇧⇥`: Cycle next / previous tab
+  - `⌘1` – `⌘8`: Switch directly to tabs 1 through 8
+  - `⌘9`: Switch to last open tab
+  - `⌘⇧T`: Reopen last closed tab (with history stack)
+- **Native macOS Menu Integration**:
+  - Added native `Selection` menu with `Split into Lines`, `Quick Add Next`, `Select All Occurrences`, `Expand Selection to Line`.
+  - Added `Line` and `Comment` submenus under native `Edit` menu.
+  - Added `Go to Symbol…` (`⌘R`), `Reopen Closed Tab` (`⌘⇧T`), and tab switching commands under native `Go` and `File` menus.
+
+---
+
 ## [2.1.0] - 2026-10-16
 
 ### 🎨 Customizable Themes & Neutral Default

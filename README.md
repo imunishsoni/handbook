@@ -103,29 +103,66 @@ Handbook ships with 5 handcrafted color themes, with a balanced, neutral dark th
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## ⌨️ Sublime Text 4 Keymap
 
-Handbook features the classic, muscle-memory shortcuts developers love:
+Handbook is designed with faithful, 1:1 muscle-memory keybindings matching Sublime Text 4 on macOS:
 
-| Shortcut | Action |
-| :--- | :--- |
-| `⌘ P` | **Quick Find File** (fuzzy project search) |
-| `⌘ ⇧ P` | **Command Palette** |
-| `⌘ ⇧ P` → `Theme` | **Preferences: Color Theme** (interactive live preview) |
-| `⌘ G` | **Jump to Line Number** |
-| `⌘ B` | **Toggle Workspace Sidebar** |
-| `⌘ S` | **Save File** (atomic disk write) |
-| `⌘ W` | **Close Current Tab** |
-| `⌘ N` | **New Draft** |
-| `⌘ O` | **Open File** |
-| `⌘ ⇧ O` | **Open Workspace Folder** |
-| `⌘ D` | **Add Selection to Next Match** (multi-cursor) |
-| `⌘ ⇧ L` | **Select All Occurrences** |
-| `⌘ /` | **Toggle Line Comment** |
-| `⌥ ↑` / `⌥ ↓` | **Move Line Up / Down** |
-| `⌘ ⇧ D` | **Duplicate Current Line** |
-| `⌘ +` / `⌘ -` | **Zoom In / Zoom Out** |
-| `⌘ 0` | **Reset Zoom** |
+### ⚡ Text & Line Editing
+| Shortcut | Action | Description |
+| :--- | :--- | :--- |
+| `⌘ ⇧ D` | **Duplicate Line / Selection** | Duplicates current line or exact text selection |
+| `⌘ ⇧ K` / `⌃ ⇧ K` | **Delete Line** | Deletes line(s) under cursor |
+| `⌘ ⌃ ↑` / `⌥ ↑` | **Move Line Up** | Swaps line(s) upward |
+| `⌘ ⌃ ↓` / `⌥ ↓` | **Move Line Down** | Swaps line(s) downward |
+| `⌘ J` | **Join Lines** | Joins line below with current line |
+| `⌘ ↵` | **Insert Line Below** | Inserts newline below without splitting current line |
+| `⌘ ⇧ ↵` | **Insert Line Above** | Inserts newline above without splitting current line |
+| `⌘ ]` / `⌘ [` | **Indent / Outdent** | Indents or unindents line/selection |
+| `⌘ K, ⌘ K` / `⌃ K` | **Delete to End of Line** | Cuts/deletes to end of line |
+| `⌘ K, ⌘ ⌫` | **Delete to Start of Line** | Deletes from cursor to start of line |
+
+### 🎯 Multi-Cursor & Selection
+| Shortcut | Action | Description |
+| :--- | :--- | :--- |
+| `⌘ D` | **Quick Add Next** | Select word under cursor / add next occurrence |
+| `⌘ K, ⌘ D` | **Quick Skip Next** | Skips current match and advances to next occurrence |
+| `⌃ ⌘ G` | **Quick Find All** | Selects all occurrences of word/selection across file |
+| `⌘ ⇧ L` | **Split Selection into Lines** | Places a cursor at the end of every selected line |
+| `⌘ L` | **Expand Selection to Line** | Selects entire line; press repeatedly to expand down |
+| `⌃ ⇧ M` | **Select to Bracket** | Selects all content within enclosing brackets |
+| `⌃ M` | **Jump to Matching Bracket** | Jumps between matching `()`, `{}`, `[]` brackets |
+| `⌘ ⌥ ↑` / `⌃ ⇧ ↑` | **Add Cursor Above** | Places an additional cursor on the line above |
+| `⌘ ⌥ ↓` / `⌃ ⇧ ↓` | **Add Cursor Below** | Places an additional cursor on the line below |
+| `⌘ U` / `⌘ ⇧ U` | **Soft Undo / Redo** | Undoes / redoes cursor and selection movements |
+
+### 💬 Comments, Folding & Case
+| Shortcut | Action | Description |
+| :--- | :--- | :--- |
+| `⌘ /` | **Toggle Line Comment** | Comments or uncomments current line(s) |
+| `⌥ ⌘ /` / `⌘ ⇧ /` | **Toggle Block Comment** | Wraps or unwraps block comment |
+| `⌥ ⌘ [` / `⌥ ⌘ ]` | **Fold / Unfold Code Block** | Folds/unfolds block at cursor |
+| `⌘ K, ⌘ 1` / `⌘ K, ⌘ 0` | **Fold All** | Folds all code blocks in the document |
+| `⌘ K, ⌘ J` | **Unfold All** | Unfolds all code blocks in the document |
+| `⌘ K, ⌘ U` | **Transform to Uppercase** | Converts selection to UPPERCASE |
+| `⌘ K, ⌘ L` | **Transform to Lowercase** | Converts selection to lowercase |
+| `⌃ T` | **Transpose Characters** | Swaps adjacent characters |
+| `F5` / `⌃ F5` | **Sort Lines Asc / Desc** | Sorts selected lines alphabetically |
+
+### 🚀 Navigation, Goto & Tabs
+| Shortcut | Action | Description |
+| :--- | :--- | :--- |
+| `⌘ P` | **Goto File** | Fuzzy project file search |
+| `⌘ R` | **Goto Symbol in File** | Fuzzy symbol search (`@` functions, classes, headings) |
+| `⌘ G` / `⌃ G` | **Goto Line** | Jump to line number (`:`) |
+| `⌘ ;` | **Goto Word in File** | Search occurrences in current file (`#`) |
+| `⌘ ⇧ P` | **Command Palette** | Access all commands and themes (`>`) |
+| `⌥ ⌘ →` / `⌃ ⇥` | **Next Tab** | Switches to next open tab |
+| `⌥ ⌘ ←` / `⌃ ⇧ ⇥` | **Previous Tab** | Switches to previous open tab |
+| `⌘ 1` .. `⌘ 8` | **Go to Tab 1–8** | Jump directly to tab index |
+| `⌘ 9` | **Go to Last Tab** | Jump directly to the last tab |
+| `⌘ ⇧ T` | **Reopen Closed Tab** | Restores the most recently closed tab |
+| `⌘ B` | **Toggle Sidebar** | Shows/hides project file tree |
+| `⌘ F` / `⌥ ⌘ F` | **Find / Replace** | Opens search and replace bar |
 
 ---
 

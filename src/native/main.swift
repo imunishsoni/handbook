@@ -310,6 +310,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         let openFolderItem = NSMenuItem(title: "Open Workspace Folder…", action: #selector(menuOpenFolder), keyEquivalent: "o")
         openFolderItem.keyEquivalentModifierMask = [.command, .shift]
         fileMenu.addItem(openFolderItem)
+        let reopenItem = NSMenuItem(title: "Reopen Closed Tab", action: #selector(menuReopenTab), keyEquivalent: "t")
+        reopenItem.keyEquivalentModifierMask = [.command, .shift]
+        fileMenu.addItem(reopenItem)
         fileMenu.addItem(NSMenuItem.separator())
         fileMenu.addItem(NSMenuItem(title: "Save", action: #selector(menuSave), keyEquivalent: "s"))
         fileMenu.addItem(NSMenuItem.separator())
@@ -328,10 +331,60 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenu.addItem(NSMenuItem.separator())
+
+        // Line Submenu
+        let lineMenuItem = NSMenuItem(title: "Line", action: nil, keyEquivalent: "")
+        let lineMenu = NSMenu(title: "Line")
+        let indentItem = NSMenuItem(title: "Indent", action: #selector(menuIndent), keyEquivalent: "]")
+        let outdentItem = NSMenuItem(title: "Outdent", action: #selector(menuOutdent), keyEquivalent: "[")
+        let dupLineItem = NSMenuItem(title: "Duplicate Line / Selection", action: #selector(menuDuplicateLine), keyEquivalent: "d")
+        dupLineItem.keyEquivalentModifierMask = [.command, .shift]
+        let delLineItem = NSMenuItem(title: "Delete Line", action: #selector(menuDeleteLine), keyEquivalent: "k")
+        delLineItem.keyEquivalentModifierMask = [.command, .shift]
+        let joinLineItem = NSMenuItem(title: "Join Lines", action: #selector(menuJoinLines), keyEquivalent: "j")
+        lineMenu.addItem(indentItem)
+        lineMenu.addItem(outdentItem)
+        lineMenu.addItem(NSMenuItem.separator())
+        lineMenu.addItem(dupLineItem)
+        lineMenu.addItem(delLineItem)
+        lineMenu.addItem(joinLineItem)
+        lineMenuItem.submenu = lineMenu
+        editMenu.addItem(lineMenuItem)
+
+        // Comment Submenu
+        let commentMenuItem = NSMenuItem(title: "Comment", action: nil, keyEquivalent: "")
+        let commentMenu = NSMenu(title: "Comment")
+        commentMenu.addItem(NSMenuItem(title: "Toggle Line Comment", action: #selector(menuToggleComment), keyEquivalent: "/"))
+        let blockCommentItem = NSMenuItem(title: "Toggle Block Comment", action: #selector(menuToggleBlockComment), keyEquivalent: "/")
+        blockCommentItem.keyEquivalentModifierMask = [.command, .option]
+        commentMenu.addItem(blockCommentItem)
+        commentMenuItem.submenu = commentMenu
+        editMenu.addItem(commentMenuItem)
+
+        editMenu.addItem(NSMenuItem.separator())
         editMenu.addItem(NSMenuItem(title: "Find…", action: #selector(menuFind), keyEquivalent: "f"))
-        editMenu.addItem(NSMenuItem(title: "Replace…", action: #selector(menuReplace), keyEquivalent: "h"))
+        let replaceItem = NSMenuItem(title: "Replace…", action: #selector(menuReplace), keyEquivalent: "f")
+        replaceItem.keyEquivalentModifierMask = [.command, .option]
+        editMenu.addItem(replaceItem)
         editMenuItem.submenu = editMenu
         mainMenu.addItem(editMenuItem)
+
+        // Selection Menu (Sublime Text style)
+        let selectionMenuItem = NSMenuItem()
+        let selectionMenu = NSMenu(title: "Selection")
+        let addNextItem = NSMenuItem(title: "Quick Add Next", action: #selector(menuAddNextMatch), keyEquivalent: "d")
+        let selectAllOccurItem = NSMenuItem(title: "Select All Occurrences", action: #selector(menuSelectAllMatches), keyEquivalent: "g")
+        selectAllOccurItem.keyEquivalentModifierMask = [.command, .control]
+        let splitLinesItem = NSMenuItem(title: "Split into Lines", action: #selector(menuSplitLines), keyEquivalent: "l")
+        splitLinesItem.keyEquivalentModifierMask = [.command, .shift]
+        let expandLineItem = NSMenuItem(title: "Expand Selection to Line", action: #selector(menuExpandLine), keyEquivalent: "l")
+        selectionMenu.addItem(addNextItem)
+        selectionMenu.addItem(selectAllOccurItem)
+        selectionMenu.addItem(NSMenuItem.separator())
+        selectionMenu.addItem(splitLinesItem)
+        selectionMenu.addItem(expandLineItem)
+        selectionMenuItem.submenu = selectionMenu
+        mainMenu.addItem(selectionMenuItem)
 
         // View Menu
         let viewMenuItem = NSMenuItem()
@@ -354,6 +407,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         let goMenu = NSMenu(title: "Go")
         goMenu.addItem(NSMenuItem(title: "Go to File…", action: #selector(menuGotoFile), keyEquivalent: "p"))
         goMenu.addItem(NSMenuItem(title: "Go to Line…", action: #selector(menuGotoLine), keyEquivalent: "g"))
+        goMenu.addItem(NSMenuItem(title: "Go to Symbol…", action: #selector(menuGotoSymbol), keyEquivalent: "r"))
+        goMenu.addItem(NSMenuItem.separator())
+        goMenu.addItem(NSMenuItem(title: "Next Tab", action: #selector(menuNextTab), keyEquivalent: ""))
+        goMenu.addItem(NSMenuItem(title: "Previous Tab", action: #selector(menuPrevTab), keyEquivalent: ""))
         goMenuItem.submenu = goMenu
         mainMenu.addItem(goMenuItem)
 
@@ -368,21 +425,36 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         NSApp.mainMenu = mainMenu
     }
 
-    @objc func menuNewFile()         { triggerAction("newFile") }
-    @objc func menuOpenFile()        { triggerAction("openFile") }
-    @objc func menuOpenFolder()      { triggerAction("openFolder") }
-    @objc func menuSave()            { triggerAction("save") }
-    @objc func menuCloseTab()        { triggerAction("closeTab") }
-    @objc func menuFind()            { triggerAction("find") }
-    @objc func menuReplace()         { triggerAction("replace") }
-    @objc func menuCommandPalette()  { triggerAction("commandPalette") }
-    @objc func menuThemePicker()     { triggerAction("themePicker") }
-    @objc func menuToggleSidebar()   { triggerAction("toggleSidebar") }
-    @objc func menuGotoFile()        { triggerAction("gotoFile") }
-    @objc func menuGotoLine()        { triggerAction("gotoLine") }
-    @objc func menuZoomIn()          { triggerAction("zoomIn") }
-    @objc func menuZoomOut()         { triggerAction("zoomOut") }
-    @objc func menuResetZoom()       { triggerAction("resetZoom") }
+    @objc func menuNewFile()            { triggerAction("newFile") }
+    @objc func menuOpenFile()           { triggerAction("openFile") }
+    @objc func menuOpenFolder()         { triggerAction("openFolder") }
+    @objc func menuReopenTab()          { triggerAction("reopenTab") }
+    @objc func menuSave()               { triggerAction("save") }
+    @objc func menuCloseTab()           { triggerAction("closeTab") }
+    @objc func menuFind()               { triggerAction("find") }
+    @objc func menuReplace()            { triggerAction("replace") }
+    @objc func menuIndent()             { triggerAction("indent") }
+    @objc func menuOutdent()            { triggerAction("outdent") }
+    @objc func menuDuplicateLine()      { triggerAction("duplicateLine") }
+    @objc func menuDeleteLine()         { triggerAction("deleteLine") }
+    @objc func menuJoinLines()          { triggerAction("joinLines") }
+    @objc func menuToggleComment()      { triggerAction("toggleComment") }
+    @objc func menuToggleBlockComment() { triggerAction("toggleBlockComment") }
+    @objc func menuAddNextMatch()       { triggerAction("addNextMatch") }
+    @objc func menuSelectAllMatches()   { triggerAction("selectAllMatches") }
+    @objc func menuSplitLines()         { triggerAction("splitLines") }
+    @objc func menuExpandLine()         { triggerAction("expandLine") }
+    @objc func menuCommandPalette()     { triggerAction("commandPalette") }
+    @objc func menuThemePicker()        { triggerAction("themePicker") }
+    @objc func menuToggleSidebar()      { triggerAction("toggleSidebar") }
+    @objc func menuGotoFile()           { triggerAction("gotoFile") }
+    @objc func menuGotoLine()           { triggerAction("gotoLine") }
+    @objc func menuGotoSymbol()         { triggerAction("gotoSymbol") }
+    @objc func menuNextTab()            { triggerAction("nextTab") }
+    @objc func menuPrevTab()            { triggerAction("prevTab") }
+    @objc func menuZoomIn()             { triggerAction("zoomIn") }
+    @objc func menuZoomOut()            { triggerAction("zoomOut") }
+    @objc func menuResetZoom()          { triggerAction("resetZoom") }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true

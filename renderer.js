@@ -17,6 +17,7 @@ let fontSize = 14;
 let untitledCounter = 0;
 let currentThemeId = localStorage.getItem('handbook_theme') || 'handbook-neutral';
 let preThemeId = currentThemeId;
+const recentlyClosedFiles = [];
 
 // ===== DOM refs =====
 const $ = (s) => document.querySelector(s);
@@ -538,20 +539,367 @@ function initMonaco() {
       editor.onDidChangeCursorPosition(() => updateStatusBar());
       editor.onDidChangeModel(() => updateStatusBar());
 
-      // Keybindings inside Monaco
-      editor.addCommand(monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KeyP, () => {
-        showGotoPanel('file');
-      });
-      editor.addCommand(monacoApi.KeyMod.CtrlCmd | monacoApi.KeyMod.Shift | monacoApi.KeyCode.KeyP, () => {
-        showGotoPanel('command');
-      });
-      editor.addCommand(monacoApi.KeyMod.CtrlCmd | monacoApi.KeyCode.KeyG, () => {
-        showGotoPanel('line');
-      });
+      // Keybindings inside Monaco (Sublime Text 4 Keymap)
+      registerSublimeKeybindings(editor);
 
       resolve();
     });
   });
+}
+
+// ============================================================
+//  Sublime Text 4 Editing Actions & Keymap
+// ============================================================
+
+function expandSelectionToLine() {
+  if (!editor) return;
+  const model = editor.getModel();
+  if (!model) return;
+  const selections = editor.getSelections() || [editor.getSelection()];
+  const lineCount = model.getLineCount();
+
+  const newSelections = selections.map(sel => {
+    let startLine = sel.startLineNumber;
+    let endLine = sel.endLineNumber;
+
+    const isWholeLine = sel.startColumn === 1 && (
+      (sel.endColumn === 1 && endLine > startLine) ||
+      (sel.endColumn === model.getLineMaxColumn(endLine))
+    );
+
+    if (isWholeLine && endLine < lineCount) {
+      endLine++;
+    }
+
+    if (endLine < lineCount) {
+      return new monacoApi.Selection(startLine, 1, endLine + 1, 1);
+    } else {
+      return new monacoApi.Selection(startLine, 1, lineCount, model.getLineMaxColumn(lineCount));
+    }
+  });
+
+  editor.setSelections(newSelections);
+}
+
+function splitSelectionIntoLines() {
+  if (!editor) return;
+  const model = editor.getModel();
+  const sel = editor.getSelection();
+  if (!model || !sel) return;
+
+  if (sel.startLineNumber !== sel.endLineNumber) {
+    const newSelections = [];
+    const endLine = sel.endColumn === 1 && sel.endLineNumber > sel.startLineNumber
+      ? sel.endLineNumber - 1
+      : sel.endLineNumber;
+
+    for (let line = sel.startLineNumber; line <= endLine; line++) {
+      const col = (line === sel.endLineNumber && sel.endColumn !== 1)
+        ? sel.endColumn
+        : model.getLineMaxColumn(line);
+      newSelections.push(new monacoApi.Selection(line, col, line, col));
+    }
+    editor.setSelections(newSelections);
+  } else {
+    editor.getAction('editor.action.selectHighlights')?.run();
+  }
+}
+
+function duplicateLineOrSelection() {
+  if (!editor) return;
+  const model = editor.getModel();
+  const selections = editor.getSelections();
+  if (!model || !selections) return;
+
+  const hasSelection = selections.some(s => !s.isEmpty());
+  if (hasSelection) {
+    const edits = [];
+    const nextSelections = [];
+    selections.forEach(sel => {
+      const text = model.getValueInRange(sel);
+      edits.push({
+        range: new monacoApi.Range(sel.endLineNumber, sel.endColumn, sel.endLineNumber, sel.endColumn),
+        text: text,
+      });
+      const lines = text.split('\n');
+      const addedLines = lines.length - 1;
+      const endCol = addedLines === 0 ? sel.endColumn + text.length : lines[lines.length - 1].length + 1;
+      nextSelections.push(new monacoApi.Selection(
+        sel.endLineNumber, sel.endColumn,
+        sel.endLineNumber + addedLines, endCol
+      ));
+    });
+    editor.executeEdits('duplicate', edits);
+    if (nextSelections.length) editor.setSelections(nextSelections);
+  } else {
+    editor.getAction('editor.action.copyLinesDownAction')?.run();
+  }
+}
+
+function deleteToEndOfLine() {
+  if (!editor) return;
+  const model = editor.getModel();
+  const selections = editor.getSelections();
+  if (!model || !selections) return;
+
+  const edits = selections.map(sel => {
+    const line = sel.positionLineNumber;
+    const col = sel.positionColumn;
+    const maxCol = model.getLineMaxColumn(line);
+    if (col >= maxCol) {
+      if (line < model.getLineCount()) {
+        return { range: new monacoApi.Range(line, col, line + 1, 1), text: '' };
+      }
+      return null;
+    }
+    return { range: new monacoApi.Range(line, col, line, maxCol), text: '' };
+  }).filter(Boolean);
+
+  if (edits.length) editor.executeEdits('deleteToEndOfLine', edits);
+}
+
+function deleteToStartOfLine() {
+  if (!editor) return;
+  const model = editor.getModel();
+  const selections = editor.getSelections();
+  if (!model || !selections) return;
+
+  const edits = selections.map(sel => {
+    const line = sel.positionLineNumber;
+    const col = sel.positionColumn;
+    if (col <= 1) {
+      if (line > 1) {
+        const prevMax = model.getLineMaxColumn(line - 1);
+        return { range: new monacoApi.Range(line - 1, prevMax, line, 1), text: '' };
+      }
+      return null;
+    }
+    return { range: new monacoApi.Range(line, 1, line, col), text: '' };
+  }).filter(Boolean);
+
+  if (edits.length) editor.executeEdits('deleteToStartOfLine', edits);
+}
+
+function reopenClosedTab() {
+  if (recentlyClosedFiles.length) {
+    const lastPath = recentlyClosedFiles.pop();
+    openFile(lastPath);
+  } else {
+    flash('No recently closed tabs');
+  }
+}
+
+function nextTab() {
+  const keys = Array.from(openFiles.keys());
+  if (keys.length <= 1) return;
+  const idx = keys.indexOf(activeFilePath);
+  const nextIdx = (idx + 1) % keys.length;
+  switchToFile(keys[nextIdx]);
+}
+
+function prevTab() {
+  const keys = Array.from(openFiles.keys());
+  if (keys.length <= 1) return;
+  const idx = keys.indexOf(activeFilePath);
+  const prevIdx = (idx - 1 + keys.length) % keys.length;
+  switchToFile(keys[prevIdx]);
+}
+
+function switchToTabIndex(index) {
+  const keys = Array.from(openFiles.keys());
+  if (!keys.length) return;
+  if (index === -1 || index >= keys.length) {
+    switchToFile(keys[keys.length - 1]);
+  } else if (index < keys.length) {
+    switchToFile(keys[index]);
+  }
+}
+
+function getDocumentSymbols() {
+  if (!editor || !editor.getModel()) return [];
+  const model = editor.getModel();
+  const text = model.getValue();
+  const lines = text.split('\n');
+  const symbols = [];
+
+  const patterns = [
+    { regex: /^\s*(?:export\s+)?(?:async\s+)?function\s*([a-zA-Z0-9_$]+)/, kind: 'function' },
+    { regex: /^\s*(?:export\s+)?(?:class|struct|enum|interface|type)\s+([a-zA-Z0-9_$]+)/, kind: 'class/type' },
+    { regex: /^\s*(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[a-zA-Z0-9_$]+)\s*=>/, kind: 'arrow fn' },
+    { regex: /^\s*(?:def|async\s+def)\s+([a-zA-Z0-9_]+)/, kind: 'def' },
+    { regex: /^\s*(?:func|fn)\s+(?:\([^)]+\)\s+)?([a-zA-Z0-9_]+)/, kind: 'func' },
+    { regex: /^(#{1,6}\s+.+)/, kind: 'heading' },
+    { regex: /^\s*(?:async\s+)?([a-zA-Z0-9_$]+)\s*\([^)]*\)\s*\{/, kind: 'method' },
+  ];
+
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*') || trimmed.startsWith('#!')) return;
+    for (const pat of patterns) {
+      const m = line.match(pat.regex);
+      if (m && m[1]) {
+        const name = m[1].trim();
+        if (['if', 'for', 'while', 'switch', 'catch', 'constructor'].includes(name) && pat.kind === 'method') {
+          continue;
+        }
+        symbols.push({ name, line: i + 1, kind: pat.kind });
+        break;
+      }
+    }
+  });
+
+  return symbols;
+}
+
+function registerSublimeKeybindings(ed) {
+  const km = monacoApi.KeyMod;
+  const kc = monacoApi.KeyCode;
+
+  // --- 1. Line Editing ---
+  // Duplicate Line / Selection: ⌘⇧D
+  ed.addCommand(km.CtrlCmd | km.Shift | kc.KeyD, () => duplicateLineOrSelection());
+
+  // Delete Line: ⌘⇧K and ⌃⇧K
+  ed.addCommand(km.CtrlCmd | km.Shift | kc.KeyK, () => ed.getAction('editor.action.deleteLines')?.run());
+  ed.addCommand(km.WinCtrl | km.Shift | kc.KeyK, () => ed.getAction('editor.action.deleteLines')?.run());
+
+  // Move Line Up / Down: ⌘⌃↑ / ⌘⌃↓ (Sublime native) and ⌥↑ / ⌥↓
+  ed.addCommand(km.CtrlCmd | km.WinCtrl | kc.UpArrow, () => ed.getAction('editor.action.moveLinesUpAction')?.run());
+  ed.addCommand(km.CtrlCmd | km.WinCtrl | kc.DownArrow, () => ed.getAction('editor.action.moveLinesDownAction')?.run());
+  ed.addCommand(km.Alt | kc.UpArrow, () => ed.getAction('editor.action.moveLinesUpAction')?.run());
+  ed.addCommand(km.Alt | kc.DownArrow, () => ed.getAction('editor.action.moveLinesDownAction')?.run());
+
+  // Join Lines: ⌘J
+  ed.addCommand(km.CtrlCmd | kc.KeyJ, () => ed.getAction('editor.action.joinLines')?.run());
+
+  // Insert Line Below: ⌘Enter
+  ed.addCommand(km.CtrlCmd | kc.Enter, () => ed.getAction('editor.action.insertLineAfter')?.run());
+
+  // Insert Line Above: ⌘⇧Enter
+  ed.addCommand(km.CtrlCmd | km.Shift | kc.Enter, () => ed.getAction('editor.action.insertLineBefore')?.run());
+
+  // Indent / Outdent: ⌘] / ⌘[
+  ed.addCommand(km.CtrlCmd | kc.BracketRight, () => ed.getAction('editor.action.indentLines')?.run());
+  ed.addCommand(km.CtrlCmd | kc.BracketLeft, () => ed.getAction('editor.action.outdentLines')?.run());
+
+  // --- 2. Selection & Multi-Cursor ---
+  // Quick Add Next (Select word / Next occurrence): ⌘D
+  ed.addCommand(km.CtrlCmd | kc.KeyD, () => ed.getAction('editor.action.addSelectionToNextFindMatch')?.run());
+
+  // Select All Occurrences: ⌃⌘G (Sublime Text Quick Find All)
+  ed.addCommand(km.WinCtrl | km.CtrlCmd | kc.KeyG, () => ed.getAction('editor.action.selectHighlights')?.run());
+
+  // Split Selection into Lines: ⌘⇧L
+  ed.addCommand(km.CtrlCmd | km.Shift | kc.KeyL, () => splitSelectionIntoLines());
+
+  // Expand Selection to Line: ⌘L
+  ed.addCommand(km.CtrlCmd | kc.KeyL, () => expandSelectionToLine());
+
+  // Bracket navigation: ⌃M (jump to matching bracket), ⌃⇧M (select to bracket)
+  ed.addCommand(km.WinCtrl | kc.KeyM, () => ed.getAction('editor.action.jumpToBracket')?.run());
+  ed.addCommand(km.WinCtrl | km.Shift | kc.KeyM, () => ed.getAction('editor.action.selectToBracket')?.run());
+
+  // Column / Multi-cursor above & below: ⌃⇧↑/↓ and ⌘⌥↑/↓
+  ed.addCommand(km.WinCtrl | km.Shift | kc.UpArrow, () => ed.getAction('editor.action.insertCursorAbove')?.run());
+  ed.addCommand(km.WinCtrl | km.Shift | kc.DownArrow, () => ed.getAction('editor.action.insertCursorBelow')?.run());
+  ed.addCommand(km.CtrlCmd | km.Alt | kc.UpArrow, () => ed.getAction('editor.action.insertCursorAbove')?.run());
+  ed.addCommand(km.CtrlCmd | km.Alt | kc.DownArrow, () => ed.getAction('editor.action.insertCursorBelow')?.run());
+
+  // Soft Undo / Redo (Undo / Redo Selection): ⌘U / ⌘⇧U
+  ed.addCommand(km.CtrlCmd | kc.KeyU, () => ed.trigger('keyboard', 'cursorUndo'));
+  ed.addCommand(km.CtrlCmd | km.Shift | kc.KeyU, () => ed.trigger('keyboard', 'cursorRedo'));
+
+  // --- 3. Comments ---
+  // Toggle Line Comment: ⌘/
+  ed.addCommand(km.CtrlCmd | kc.Slash, () => ed.getAction('editor.action.commentLine')?.run());
+  // Toggle Block Comment: ⌥⌘/ and ⌘⇧/
+  ed.addCommand(km.CtrlCmd | km.Alt | kc.Slash, () => ed.getAction('editor.action.blockComment')?.run());
+  ed.addCommand(km.CtrlCmd | km.Shift | kc.Slash, () => ed.getAction('editor.action.blockComment')?.run());
+
+  // --- 4. Code Folding ---
+  // Fold / Unfold current block: ⌥⌘[ / ⌥⌘]
+  ed.addCommand(km.Alt | km.CtrlCmd | kc.BracketLeft, () => ed.getAction('editor.fold')?.run());
+  ed.addCommand(km.Alt | km.CtrlCmd | kc.BracketRight, () => ed.getAction('editor.unfold')?.run());
+
+  // Fold All: ⌘K ⌘1 and ⌘K ⌘0
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, km.CtrlCmd | kc.Digit1), () => ed.getAction('editor.foldAll')?.run());
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, km.CtrlCmd | kc.Digit0), () => ed.getAction('editor.foldAll')?.run());
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, kc.Digit1), () => ed.getAction('editor.foldAll')?.run());
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, kc.Digit0), () => ed.getAction('editor.foldAll')?.run());
+
+  // Unfold All: ⌘K ⌘J
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, km.CtrlCmd | kc.KeyJ), () => ed.getAction('editor.unfoldAll')?.run());
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, kc.KeyJ), () => ed.getAction('editor.unfoldAll')?.run());
+
+  // --- 5. Text Transformation & Case ---
+  // Transform to Uppercase: ⌘K ⌘U
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, km.CtrlCmd | kc.KeyU), () => ed.getAction('editor.action.transformToUppercase')?.run());
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, kc.KeyU), () => ed.getAction('editor.action.transformToUppercase')?.run());
+
+  // Transform to Lowercase: ⌘K ⌘L
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, km.CtrlCmd | kc.KeyL), () => ed.getAction('editor.action.transformToLowercase')?.run());
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, kc.KeyL), () => ed.getAction('editor.action.transformToLowercase')?.run());
+
+  // Skip Next Occurrence: ⌘K ⌘D
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, km.CtrlCmd | kc.KeyD), () => ed.getAction('editor.action.moveSelectionToNextFindMatch')?.run());
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, kc.KeyD), () => ed.getAction('editor.action.moveSelectionToNextFindMatch')?.run());
+
+  // Delete to End of Line: ⌘K ⌘K and ⌃K
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, km.CtrlCmd | kc.KeyK), () => deleteToEndOfLine());
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, kc.KeyK), () => deleteToEndOfLine());
+  ed.addCommand(km.WinCtrl | kc.KeyK, () => deleteToEndOfLine());
+
+  // Delete to Start of Line: ⌘K ⌘⌫
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, km.CtrlCmd | kc.Backspace), () => deleteToStartOfLine());
+  ed.addCommand(km.chord(km.CtrlCmd | kc.KeyK, kc.Backspace), () => deleteToStartOfLine());
+
+  // Transpose: ⌃T
+  ed.addCommand(km.WinCtrl | kc.KeyT, () => ed.getAction('editor.action.transposeLetters')?.run());
+
+  // Sort Lines: F5 (asc) and ⌃F5 / ⇧F5 (desc)
+  ed.addCommand(kc.F5, () => ed.getAction('editor.action.sortLinesAscending')?.run());
+  ed.addCommand(km.WinCtrl | kc.F5, () => ed.getAction('editor.action.sortLinesDescending')?.run());
+  ed.addCommand(km.Shift | kc.F5, () => ed.getAction('editor.action.sortLinesDescending')?.run());
+
+  // Format Document: ⌥⇧F
+  ed.addCommand(km.Alt | km.Shift | kc.KeyF, () => ed.getAction('editor.action.formatDocument')?.run());
+
+  // --- 6. Navigation & Goto ---
+  ed.addCommand(km.CtrlCmd | kc.KeyP, () => showGotoPanel('file'));
+  ed.addCommand(km.CtrlCmd | km.Shift | kc.KeyP, () => showGotoPanel('command'));
+  ed.addCommand(km.CtrlCmd | kc.KeyG, () => showGotoPanel('line'));
+  ed.addCommand(km.WinCtrl | kc.KeyG, () => showGotoPanel('line'));
+  ed.addCommand(km.CtrlCmd | kc.KeyR, () => showGotoPanel('symbol'));
+  ed.addCommand(km.CtrlCmd | kc.Semicolon, () => showGotoPanel('word'));
+
+  // --- 7. Find & Replace ---
+  ed.addCommand(km.CtrlCmd | kc.KeyF, () => ed.getAction('actions.find')?.run());
+  ed.addCommand(km.CtrlCmd | km.Alt | kc.KeyF, () => ed.getAction('editor.action.startFindReplaceAction')?.run());
+  ed.addCommand(km.CtrlCmd | kc.KeyH, () => ed.getAction('editor.action.startFindReplaceAction')?.run());
+
+  // --- 8. Tabs & Files ---
+  ed.addCommand(km.CtrlCmd | kc.KeyS, () => saveFile());
+  ed.addCommand(km.CtrlCmd | kc.KeyN, () => newFile());
+  ed.addCommand(km.CtrlCmd | kc.KeyW, () => closeFile(activeFilePath));
+  ed.addCommand(km.CtrlCmd | km.Shift | kc.KeyT, () => reopenClosedTab());
+  ed.addCommand(km.CtrlCmd | kc.KeyB, () => toggleSidebar());
+
+  // Next / Prev Tab: ⌥⌘→ / ⌥⌘← and ⌃⇥ / ⌃⇧⇥
+  ed.addCommand(km.CtrlCmd | km.Alt | kc.RightArrow, () => nextTab());
+  ed.addCommand(km.CtrlCmd | km.Alt | kc.LeftArrow, () => prevTab());
+  ed.addCommand(km.WinCtrl | kc.Tab, () => nextTab());
+  ed.addCommand(km.WinCtrl | km.Shift | kc.Tab, () => prevTab());
+
+  // Tab 1..9: ⌘1 .. ⌘9
+  ed.addCommand(km.CtrlCmd | kc.Digit1, () => switchToTabIndex(0));
+  ed.addCommand(km.CtrlCmd | kc.Digit2, () => switchToTabIndex(1));
+  ed.addCommand(km.CtrlCmd | kc.Digit3, () => switchToTabIndex(2));
+  ed.addCommand(km.CtrlCmd | kc.Digit4, () => switchToTabIndex(3));
+  ed.addCommand(km.CtrlCmd | kc.Digit5, () => switchToTabIndex(4));
+  ed.addCommand(km.CtrlCmd | kc.Digit6, () => switchToTabIndex(5));
+  ed.addCommand(km.CtrlCmd | kc.Digit7, () => switchToTabIndex(6));
+  ed.addCommand(km.CtrlCmd | kc.Digit8, () => switchToTabIndex(7));
+  ed.addCommand(km.CtrlCmd | kc.Digit9, () => switchToTabIndex(-1));
 }
 
 // ============================================================
@@ -672,6 +1020,11 @@ function closeFile(filePath) {
   if (!filePath) return;
   const f = openFiles.get(filePath);
   if (!f) return;
+
+  if (!filePath.startsWith('untitled:')) {
+    recentlyClosedFiles.push(filePath);
+    if (recentlyClosedFiles.length > 30) recentlyClosedFiles.shift();
+  }
 
   f.model.dispose();
   openFiles.delete(filePath);
@@ -874,9 +1227,15 @@ function showGotoPanel(mode) {
   }
   gotoSelectedIndex = 0;
   gotoOverlay.classList.remove('hidden');
-  gotoInput.value = mode === 'command' ? '>' : mode === 'line' ? ':' : '';
+  gotoInput.value = mode === 'command' ? '>'
+                  : mode === 'line' ? ':'
+                  : mode === 'symbol' ? '@'
+                  : mode === 'word' ? '#'
+                  : '';
   gotoInput.placeholder = mode === 'command' ? 'Type a command…'
                         : mode === 'line' ? 'Go to line…'
+                        : mode === 'symbol' ? 'Go to symbol in file…'
+                        : mode === 'word' ? 'Search in file…'
                         : mode === 'theme' ? 'Select color theme (↑/↓ to preview)…'
                         : 'Go to File…';
   gotoInput.focus();
@@ -942,6 +1301,38 @@ function populateGotoResults() {
         editor.focus();
       });
       gotoResults.appendChild(el);
+    }
+  } else if (raw.startsWith('@') || gotoMode === 'symbol') {
+    // ---- Go to Symbol in File (⌘R) ----
+    const q = (raw.startsWith('@') ? raw.slice(1) : raw).trim().toLowerCase();
+    const symbols = getDocumentSymbols();
+    const list = q ? symbols.filter((s) => fuzzy(q, s.name.toLowerCase())) : symbols;
+    list.slice(0, 100).forEach((sym, i) => {
+      const el = makeResultEl(sym.name, `Ln ${sym.line} • ${sym.kind}`, i);
+      el.addEventListener('click', () => {
+        hideGotoPanel();
+        editor.revealLineInCenter(sym.line);
+        editor.setPosition({ lineNumber: sym.line, column: 1 });
+        editor.focus();
+      });
+      gotoResults.appendChild(el);
+    });
+  } else if (raw.startsWith('#') || gotoMode === 'word') {
+    // ---- Go to Word / Search in file (⌘;) ----
+    const q = (raw.startsWith('#') ? raw.slice(1) : raw).trim();
+    if (q && editor && editor.getModel()) {
+      const matches = editor.getModel().findMatches(q, false, false, false, null, true, 60);
+      matches.forEach((m, i) => {
+        const lineContent = editor.getModel().getLineContent(m.range.startLineNumber).trim();
+        const el = makeResultEl(lineContent, `Ln ${m.range.startLineNumber}`, i);
+        el.addEventListener('click', () => {
+          hideGotoPanel();
+          editor.revealRangeInCenter(m.range);
+          editor.setSelection(m.range);
+          editor.focus();
+        });
+        gotoResults.appendChild(el);
+      });
     }
   } else {
     // ---- Go to File ----
@@ -1028,45 +1419,78 @@ function handleGotoKey(e) {
 
 function getCommands() {
   return [
-    { name: 'New File',                   shortcut: '⌘N',     action: () => newFile() },
-    { name: 'Open File…',                 shortcut: '⌘O',     action: () => openFileDialog() },
-    { name: 'Open Folder…',              shortcut: '',        action: () => openFolder() },
-    { name: 'Save',                       shortcut: '⌘S',     action: () => saveFile() },
-    { name: 'Close Tab',                  shortcut: '⌘W',     action: () => closeFile(activeFilePath) },
-    { name: 'Toggle Sidebar',             shortcut: '⌘B',     action: () => toggleSidebar() },
-    { name: 'Toggle Minimap',             shortcut: '',        action: () => toggleMinimap() },
-    { name: 'Preferences: Color Theme',   shortcut: '',        action: () => showGotoPanel('theme') },
-    { name: 'Go to Line…',               shortcut: '⌘G',     action: () => showGotoPanel('line') },
-    { name: 'Go to File…',               shortcut: '⌘P',     action: () => showGotoPanel('file') },
-    { name: 'Find',                       shortcut: '⌘F',     action: () => editor?.getAction('actions.find')?.run() },
-    { name: 'Find and Replace',           shortcut: '⌘H',     action: () => editor?.getAction('editor.action.startFindReplaceAction')?.run() },
-    { name: 'Word Wrap: Toggle',          shortcut: '⌥Z',     action: () => {
+    // File & Tab Navigation
+    { name: 'File: New File',                         shortcut: '⌘N',      action: () => newFile() },
+    { name: 'File: Open File…',                       shortcut: '⌘O',      action: () => openFileDialog() },
+    { name: 'File: Open Workspace Folder…',           shortcut: '⌘⇧O',     action: () => openFolder() },
+    { name: 'File: Save',                             shortcut: '⌘S',      action: () => saveFile() },
+    { name: 'File: Close Tab',                        shortcut: '⌘W',      action: () => closeFile(activeFilePath) },
+    { name: 'File: Reopen Closed Tab',                shortcut: '⌘⇧T',     action: () => reopenClosedTab() },
+    { name: 'Tab: Next Tab',                          shortcut: '⌥⌘→',     action: () => nextTab() },
+    { name: 'Tab: Previous Tab',                      shortcut: '⌥⌘←',     action: () => prevTab() },
+
+    // Go To (Sublime Style)
+    { name: 'Go to: File…',                           shortcut: '⌘P',      action: () => showGotoPanel('file') },
+    { name: 'Go to: Symbol in File…',                 shortcut: '⌘R',      action: () => showGotoPanel('symbol') },
+    { name: 'Go to: Line…',                           shortcut: '⌘G',      action: () => showGotoPanel('line') },
+    { name: 'Go to: Word in File…',                   shortcut: '⌘;',      action: () => showGotoPanel('word') },
+    { name: 'Go to: Matching Bracket',                shortcut: '⌃M',      action: () => editor?.getAction('editor.action.jumpToBracket')?.run() },
+
+    // Selection & Multi-Cursor
+    { name: 'Selection: Quick Add Next',              shortcut: '⌘D',      action: () => editor?.getAction('editor.action.addSelectionToNextFindMatch')?.run() },
+    { name: 'Selection: Quick Skip Next',             shortcut: '⌘K ⌘D',   action: () => editor?.getAction('editor.action.moveSelectionToNextFindMatch')?.run() },
+    { name: 'Selection: Select All Occurrences',      shortcut: '⌃⌘G',     action: () => editor?.getAction('editor.action.selectHighlights')?.run() },
+    { name: 'Selection: Split into Lines',            shortcut: '⌘⇧L',     action: () => splitSelectionIntoLines() },
+    { name: 'Selection: Expand to Line',              shortcut: '⌘L',      action: () => expandSelectionToLine() },
+    { name: 'Selection: Select to Bracket',           shortcut: '⌃⇧M',     action: () => editor?.getAction('editor.action.selectToBracket')?.run() },
+    { name: 'Selection: Add Cursor Above',            shortcut: '⌘⌥↑',    action: () => editor?.getAction('editor.action.insertCursorAbove')?.run() },
+    { name: 'Selection: Add Cursor Below',            shortcut: '⌘⌥↓',    action: () => editor?.getAction('editor.action.insertCursorBelow')?.run() },
+    { name: 'Selection: Soft Undo (Undo Cursor)',     shortcut: '⌘U',      action: () => editor?.trigger('keyboard', 'cursorUndo') },
+    { name: 'Selection: Soft Redo (Redo Cursor)',     shortcut: '⌘⇧U',    action: () => editor?.trigger('keyboard', 'cursorRedo') },
+
+    // Line Editing
+    { name: 'Line: Duplicate Line / Selection',       shortcut: '⌘⇧D',    action: () => duplicateLineOrSelection() },
+    { name: 'Line: Delete Line',                      shortcut: '⌘⇧K',    action: () => editor?.getAction('editor.action.deleteLines')?.run() },
+    { name: 'Line: Move Line Up',                     shortcut: '⌘⌃↑',     action: () => editor?.getAction('editor.action.moveLinesUpAction')?.run() },
+    { name: 'Line: Move Line Down',                   shortcut: '⌘⌃↓',     action: () => editor?.getAction('editor.action.moveLinesDownAction')?.run() },
+    { name: 'Line: Join Lines',                       shortcut: '⌘J',      action: () => editor?.getAction('editor.action.joinLines')?.run() },
+    { name: 'Line: Insert Line Below',                shortcut: '⌘↵',      action: () => editor?.getAction('editor.action.insertLineAfter')?.run() },
+    { name: 'Line: Insert Line Above',                shortcut: '⌘⇧↵',    action: () => editor?.getAction('editor.action.insertLineBefore')?.run() },
+    { name: 'Line: Indent Line',                      shortcut: '⌘]',      action: () => editor?.getAction('editor.action.indentLines')?.run() },
+    { name: 'Line: Outdent Line',                     shortcut: '⌘[',      action: () => editor?.getAction('editor.action.outdentLines')?.run() },
+    { name: 'Line: Delete to End of Line',            shortcut: '⌘K ⌘K',   action: () => deleteToEndOfLine() },
+    { name: 'Line: Delete to Start of Line',          shortcut: '⌘K ⌘⌫',  action: () => deleteToStartOfLine() },
+
+    // Code & Formatting
+    { name: 'Code: Toggle Line Comment',              shortcut: '⌘/',      action: () => editor?.getAction('editor.action.commentLine')?.run() },
+    { name: 'Code: Toggle Block Comment',             shortcut: '⌥⌘/',     action: () => editor?.getAction('editor.action.blockComment')?.run() },
+    { name: 'Code: Fold Block',                       shortcut: '⌥⌘[',     action: () => editor?.getAction('editor.fold')?.run() },
+    { name: 'Code: Unfold Block',                     shortcut: '⌥⌘]',     action: () => editor?.getAction('editor.unfold')?.run() },
+    { name: 'Code: Fold All',                         shortcut: '⌘K ⌘1',   action: () => editor?.getAction('editor.foldAll')?.run() },
+    { name: 'Code: Unfold All',                       shortcut: '⌘K ⌘J',   action: () => editor?.getAction('editor.unfoldAll')?.run() },
+    { name: 'Code: Format Document',                  shortcut: '⌥⇧F',    action: () => editor?.getAction('editor.action.formatDocument')?.run() },
+    { name: 'Code: Sort Lines Ascending',             shortcut: 'F5',      action: () => editor?.getAction('editor.action.sortLinesAscending')?.run() },
+    { name: 'Code: Sort Lines Descending',            shortcut: '⌃F5',     action: () => editor?.getAction('editor.action.sortLinesDescending')?.run() },
+    { name: 'Code: Transform to Uppercase',           shortcut: '⌘K ⌘U',   action: () => editor?.getAction('editor.action.transformToUppercase')?.run() },
+    { name: 'Code: Transform to Lowercase',           shortcut: '⌘K ⌘L',   action: () => editor?.getAction('editor.action.transformToLowercase')?.run() },
+    { name: 'Code: Transpose Characters',             shortcut: '⌃T',      action: () => editor?.getAction('editor.action.transposeLetters')?.run() },
+    { name: 'Code: Trim Trailing Whitespace',         shortcut: '',        action: () => editor?.getAction('editor.action.trimTrailingWhitespace')?.run() },
+
+    // Find & Replace
+    { name: 'Find: Find…',                            shortcut: '⌘F',      action: () => editor?.getAction('actions.find')?.run() },
+    { name: 'Find: Replace…',                         shortcut: '⌥⌘F',     action: () => editor?.getAction('editor.action.startFindReplaceAction')?.run() },
+
+    // View & Preferences
+    { name: 'View: Toggle Sidebar',                   shortcut: '⌘B',      action: () => toggleSidebar() },
+    { name: 'View: Toggle Minimap',                   shortcut: '',        action: () => toggleMinimap() },
+    { name: 'View: Word Wrap Toggle',                 shortcut: '⌥Z',      action: () => {
       const cur = editor.getOption(monacoApi.editor.EditorOption.wordWrap);
       editor.updateOptions({ wordWrap: cur === 'off' ? 'on' : 'off' });
     }},
-    { name: 'Zoom In',                    shortcut: '⌘+',     action: () => { fontSize += 2; editor.updateOptions({ fontSize }); }},
-    { name: 'Zoom Out',                   shortcut: '⌘-',     action: () => { fontSize = Math.max(8, fontSize - 2); editor.updateOptions({ fontSize }); }},
-    { name: 'Reset Zoom',                 shortcut: '⌘0',     action: () => { fontSize = 14; editor.updateOptions({ fontSize }); }},
-    { name: 'Toggle Line Comment',        shortcut: '⌘/',     action: () => editor?.getAction('editor.action.commentLine')?.run() },
-    { name: 'Toggle Block Comment',       shortcut: '⌘⇧/',   action: () => editor?.getAction('editor.action.blockComment')?.run() },
-    { name: 'Duplicate Line',             shortcut: '⌘⇧D',   action: () => editor?.getAction('editor.action.copyLinesDownAction')?.run() },
-    { name: 'Move Line Up',               shortcut: '⌥↑',     action: () => editor?.getAction('editor.action.moveLinesUpAction')?.run() },
-    { name: 'Move Line Down',             shortcut: '⌥↓',     action: () => editor?.getAction('editor.action.moveLinesDownAction')?.run() },
-    { name: 'Delete Line',                shortcut: '⌘⇧K',   action: () => editor?.getAction('editor.action.deleteLines')?.run() },
-    { name: 'Select All Occurrences',     shortcut: '⌘⇧L',   action: () => editor?.getAction('editor.action.selectHighlights')?.run() },
-    { name: 'Add Selection to Next Find', shortcut: '⌘D',     action: () => editor?.getAction('editor.action.addSelectionToNextFindMatch')?.run() },
-    { name: 'Add Cursor Above',           shortcut: '⌘⌥↑',   action: () => editor?.getAction('editor.action.insertCursorAbove')?.run() },
-    { name: 'Add Cursor Below',           shortcut: '⌘⌥↓',   action: () => editor?.getAction('editor.action.insertCursorBelow')?.run() },
-    { name: 'Fold All',                   shortcut: '⌘K⌘0',  action: () => editor?.getAction('editor.foldAll')?.run() },
-    { name: 'Unfold All',                 shortcut: '⌘K⌘J',  action: () => editor?.getAction('editor.unfoldAll')?.run() },
-    { name: 'Format Document',            shortcut: '⌥⇧F',   action: () => editor?.getAction('editor.action.formatDocument')?.run() },
-    { name: 'Sort Lines Ascending',       shortcut: '',        action: () => editor?.getAction('editor.action.sortLinesAscending')?.run() },
-    { name: 'Sort Lines Descending',      shortcut: '',        action: () => editor?.getAction('editor.action.sortLinesDescending')?.run() },
-    { name: 'Transform to Uppercase',     shortcut: '',        action: () => editor?.getAction('editor.action.transformToUppercase')?.run() },
-    { name: 'Transform to Lowercase',     shortcut: '',        action: () => editor?.getAction('editor.action.transformToLowercase')?.run() },
-    { name: 'Trim Trailing Whitespace',   shortcut: '',        action: () => editor?.getAction('editor.action.trimTrailingWhitespace')?.run() },
-    { name: 'Indent Line',                shortcut: '⌘]',     action: () => editor?.getAction('editor.action.indentLines')?.run() },
-    { name: 'Outdent Line',               shortcut: '⌘[',     action: () => editor?.getAction('editor.action.outdentLines')?.run() },
+    { name: 'View: Zoom In',                          shortcut: '⌘+',      action: () => { fontSize += 2; editor.updateOptions({ fontSize }); }},
+    { name: 'View: Zoom Out',                         shortcut: '⌘-',      action: () => { fontSize = Math.max(8, fontSize - 2); editor.updateOptions({ fontSize }); }},
+    { name: 'View: Reset Zoom',                       shortcut: '⌘0',      action: () => { fontSize = 14; editor.updateOptions({ fontSize }); }},
+    { name: 'Preferences: Color Theme',               shortcut: '',        action: () => showGotoPanel('theme') },
   ];
 }
 
@@ -1160,6 +1584,7 @@ function initEvents() {
       else if (a === 'gotoFile')        showGotoPanel('file');
       else if (a === 'commandPalette')  showGotoPanel('command');
       else if (a === 'gotoLine')        showGotoPanel('line');
+      else if (a === 'gotoSymbol')      showGotoPanel('symbol');
       else if (a === 'themePicker')     showGotoPanel('theme');
     });
   });
@@ -1167,37 +1592,123 @@ function initEvents() {
   // Menu actions from main process
   window.api.onMenuAction((action) => {
     const handlers = {
-      openFile:        () => openFileDialog(),
-      openFolder:      () => openFolder(),
-      save:            () => saveFile(),
-      saveAs:          () => saveFile(),  // simplified
-      newFile:         () => newFile(),
-      closeTab:        () => closeFile(activeFilePath),
-      find:            () => editor?.getAction('actions.find')?.run(),
-      replace:         () => editor?.getAction('editor.action.startFindReplaceAction')?.run(),
-      commandPalette:  () => showGotoPanel('command'),
-      themePicker:     () => showGotoPanel('theme'),
-      gotoFile:        () => showGotoPanel('file'),
-      gotoLine:        () => showGotoPanel('line'),
-      toggleSidebar:   () => toggleSidebar(),
-      toggleMinimap:   () => toggleMinimap(),
-      zoomIn:          () => { fontSize += 2; editor?.updateOptions({ fontSize }); },
-      zoomOut:         () => { fontSize = Math.max(8, fontSize - 2); editor?.updateOptions({ fontSize }); },
-      resetZoom:       () => { fontSize = 14; editor?.updateOptions({ fontSize }); },
+      openFile:           () => openFileDialog(),
+      openFolder:         () => openFolder(),
+      reopenTab:          () => reopenClosedTab(),
+      save:               () => saveFile(),
+      saveAs:             () => saveFile(),
+      newFile:            () => newFile(),
+      closeTab:           () => closeFile(activeFilePath),
+      find:               () => editor?.getAction('actions.find')?.run(),
+      replace:            () => editor?.getAction('editor.action.startFindReplaceAction')?.run(),
+      commandPalette:     () => showGotoPanel('command'),
+      themePicker:        () => showGotoPanel('theme'),
+      gotoFile:           () => showGotoPanel('file'),
+      gotoLine:           () => showGotoPanel('line'),
+      gotoSymbol:         () => showGotoPanel('symbol'),
+      nextTab:            () => nextTab(),
+      prevTab:            () => prevTab(),
+      indent:             () => editor?.getAction('editor.action.indentLines')?.run(),
+      outdent:            () => editor?.getAction('editor.action.outdentLines')?.run(),
+      duplicateLine:      () => duplicateLineOrSelection(),
+      deleteLine:         () => editor?.getAction('editor.action.deleteLines')?.run(),
+      joinLines:          () => editor?.getAction('editor.action.joinLines')?.run(),
+      toggleComment:      () => editor?.getAction('editor.action.commentLine')?.run(),
+      toggleBlockComment: () => editor?.getAction('editor.action.blockComment')?.run(),
+      splitLines:         () => splitSelectionIntoLines(),
+      expandLine:         () => expandSelectionToLine(),
+      addNextMatch:       () => editor?.getAction('editor.action.addSelectionToNextFindMatch')?.run(),
+      selectAllMatches:   () => editor?.getAction('editor.action.selectHighlights')?.run(),
+      toggleSidebar:      () => toggleSidebar(),
+      toggleMinimap:      () => toggleMinimap(),
+      zoomIn:             () => { fontSize += 2; editor?.updateOptions({ fontSize }); },
+      zoomOut:            () => { fontSize = Math.max(8, fontSize - 2); editor?.updateOptions({ fontSize }); },
+      resetZoom:          () => { fontSize = 14; editor?.updateOptions({ fontSize }); },
     };
     handlers[action]?.();
   });
 
-  // Global keyboard shortcuts (when Monaco doesn't have focus)
+  // Global keyboard shortcuts (when Monaco doesn't have focus or across application)
   document.addEventListener('keydown', (e) => {
     const cmd = e.metaKey || e.ctrlKey;
-    if (cmd && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); showGotoPanel('command'); }
-    else if (cmd && e.key.toLowerCase() === 'p' && !e.shiftKey) { e.preventDefault(); showGotoPanel('file'); }
-    else if (cmd && e.key.toLowerCase() === 'g' && !e.shiftKey) { e.preventDefault(); showGotoPanel('line'); }
-    else if (cmd && e.key.toLowerCase() === 's' && !e.shiftKey) { e.preventDefault(); saveFile(); }
-    else if (cmd && e.key.toLowerCase() === 'n' && !e.shiftKey) { e.preventDefault(); newFile(); }
-    else if (cmd && e.key.toLowerCase() === 'w' && !e.shiftKey) { e.preventDefault(); closeFile(activeFilePath); }
-    else if (cmd && e.key.toLowerCase() === 'b' && !e.shiftKey) { e.preventDefault(); toggleSidebar(); }
+    const opt = e.altKey;
+    const shift = e.shiftKey;
+    const key = e.key.toLowerCase();
+
+    // Prevent default browser shortcuts that interfere with editor actions
+    if (cmd && key === 'r') {
+      e.preventDefault();
+      showGotoPanel('symbol');
+      return;
+    }
+    if (cmd && key === 'd' && !shift && !opt) {
+      // Avoid bookmarking in WebKit
+      e.preventDefault();
+      if (editor) editor.getAction('editor.action.addSelectionToNextFindMatch')?.run();
+      return;
+    }
+    if (cmd && shift && key === 'd') {
+      e.preventDefault();
+      duplicateLineOrSelection();
+      return;
+    }
+    if (cmd && key === 'j') {
+      e.preventDefault();
+      if (editor) editor.getAction('editor.action.joinLines')?.run();
+      return;
+    }
+    if (cmd && key === 'l' && !shift) {
+      e.preventDefault();
+      expandSelectionToLine();
+      return;
+    }
+    if (cmd && shift && key === 'l') {
+      e.preventDefault();
+      splitSelectionIntoLines();
+      return;
+    }
+    if (cmd && (key === '[' || key === ']')) {
+      e.preventDefault();
+      if (editor) {
+        if (key === '[') editor.getAction('editor.action.outdentLines')?.run();
+        else editor.getAction('editor.action.indentLines')?.run();
+      }
+      return;
+    }
+    if (cmd && shift && key === 't') {
+      e.preventDefault();
+      reopenClosedTab();
+      return;
+    }
+    if (cmd && opt && e.key === 'ArrowRight') {
+      e.preventDefault();
+      nextTab();
+      return;
+    }
+    if (cmd && opt && e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prevTab();
+      return;
+    }
+    if (e.ctrlKey && e.key === 'Tab') {
+      e.preventDefault();
+      if (shift) prevTab();
+      else nextTab();
+      return;
+    }
+    if (cmd && !shift && !opt && e.key >= '1' && e.key <= '9') {
+      e.preventDefault();
+      const num = parseInt(e.key, 10);
+      switchToTabIndex(num === 9 ? -1 : num - 1);
+      return;
+    }
+    if (cmd && shift && key === 'p') { e.preventDefault(); showGotoPanel('command'); return; }
+    if (cmd && !shift && key === 'p') { e.preventDefault(); showGotoPanel('file'); return; }
+    if (cmd && !shift && key === 'g') { e.preventDefault(); showGotoPanel('line'); return; }
+    if (cmd && !shift && key === 's') { e.preventDefault(); saveFile(); return; }
+    if (cmd && !shift && key === 'n') { e.preventDefault(); newFile(); return; }
+    if (cmd && !shift && key === 'w') { e.preventDefault(); closeFile(activeFilePath); return; }
+    if (cmd && !shift && key === 'b') { e.preventDefault(); toggleSidebar(); return; }
   });
 
   // Drag & drop
