@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="build/icon.icns" width="128" height="128" alt="Handbook App Icon" />
+  <img src="assets/icon.png" width="128" height="128" alt="Handbook App Icon" />
 </p>
 
 <h1 align="center">Handbook</h1>
