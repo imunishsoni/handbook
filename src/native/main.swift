@@ -396,9 +396,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
     var pendingCliPath: String?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        setupAppIcon()
         setupWindow()
         setupMenu()
         loadEditor()
+    }
+
+    private func setupAppIcon() {
+        if let iconURL = Bundle.main.url(forResource: "icon", withExtension: "icns"),
+           let image = NSImage(contentsOf: iconURL) {
+            NSApp.applicationIconImage = image
+        } else if let resourcePath = Bundle.main.resourcePath {
+            let directURL = URL(fileURLWithPath: resourcePath).appendingPathComponent("icon.icns")
+            if let image = NSImage(contentsOf: directURL) {
+                NSApp.applicationIconImage = image
+            }
+        }
     }
 
     private func setupWindow() {
@@ -490,7 +503,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         // App Menu
         let appMenuItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "About Handbook", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(withTitle: "About Handbook", action: #selector(menuAboutHandbook), keyEquivalent: "")
         appMenu.addItem(NSMenuItem.separator())
         appMenu.addItem(withTitle: "Hide Handbook", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         appMenu.addItem(withTitle: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h").keyEquivalentModifierMask = [.command, .option]
@@ -624,6 +637,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         mainMenu.addItem(windowMenuItem)
 
         NSApp.mainMenu = mainMenu
+    }
+
+    @objc func menuAboutHandbook() {
+        var options: [NSApplication.AboutPanelOptionKey: Any] = [
+            .applicationName: "Handbook"
+        ]
+        if let icon = NSApp.applicationIconImage {
+            options[.applicationIcon] = icon
+        }
+        NSApplication.shared.orderFrontStandardAboutPanel(options)
     }
 
     @objc func menuNewFile()            { triggerAction("newFile") }

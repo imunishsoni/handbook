@@ -21,7 +21,7 @@ mkdir -p "$TEMP_BUILD"
 trap 'rm -rf "$TEMP_BUILD"' EXIT
 
 echo "==> 1. Generating latest app icon..."
-if [ ! -f "$DIR/build/icon.icns" ]; then
+if [ ! -f "$DIR/build/icon.icns" ] || [ ! -f "$DIR/assets/icon.png" ]; then
   npm run icon
 fi
 
@@ -114,6 +114,7 @@ chmod +x "$SHARED_SUPPORT/handbook"
 
 echo "==> 6. Bundling icon and web assets..."
 cp "$DIR/build/icon.icns" "$RESOURCES/icon.icns"
+cp -R "$DIR/assets" "$WEB/"
 
 cp "$DIR/index.html" "$WEB/"
 cp "$DIR/styles.css" "$WEB/"

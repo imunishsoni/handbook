@@ -40,6 +40,19 @@ fs.mkdirSync(stagingDir, { recursive: true });
 execSync(`cp -R "${appPath}" "${stagingDir}/"`);
 execSync(`ln -s /Applications "${stagingDir}/Applications"`);
 
+// Set closed book volume icon on the mounted DMG disk image
+const icnsSource = path.join(rootDir, 'build', 'icon.icns');
+if (fs.existsSync(icnsSource)) {
+  const destIcon = path.join(stagingDir, '.VolumeIcon.icns');
+  fs.copyFileSync(icnsSource, destIcon);
+  try {
+    execSync(`SetFile -c icnC "${destIcon}"`);
+    execSync(`SetFile -a C "${stagingDir}"`);
+  } catch (e) {
+    console.warn('SetFile skipped for volume icon:', e.message);
+  }
+}
+
 console.log('3. Creating Universal 2 native DMG image...');
 if (fs.existsSync(universalDmg)) fs.unlinkSync(universalDmg);
 execSync(`hdiutil create -volname "Handbook" -srcfolder "${stagingDir}" -ov -format UDZO "${universalDmg}"`, {

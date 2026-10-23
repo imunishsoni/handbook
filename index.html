@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; font-src 'self' data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Handbook</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="alternate icon" type="image/png" href="assets/icon.png">
   <link rel="stylesheet" href="./node_modules/xterm/css/xterm.css">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,6 +16,7 @@
   <div id="titlebar">
     <div id="titlebar-drag"></div>
     <div id="titlebar-title">
+      <img class="titlebar-logo" src="assets/icon.png" alt="" width="14" height="14">
       <span class="brand-mark">HANDBOOK</span>
       <span id="titlebar-doc"></span>
     </div>
@@ -45,31 +48,7 @@
         <!-- Welcome Screen -->
         <div id="welcome-screen">
           <div class="welcome-content">
-            <svg class="welcome-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="hLeft" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#38bdf8"/>
-                  <stop offset="100%" stop-color="#4f46e5"/>
-                </linearGradient>
-                <linearGradient id="hRight" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#a855f7"/>
-                  <stop offset="100%" stop-color="#ec4899"/>
-                </linearGradient>
-                <linearGradient id="hRibbon" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#2dd4bf"/>
-                  <stop offset="100%" stop-color="#059669"/>
-                </linearGradient>
-              </defs>
-              <path d="M 22 25 C 34 22, 47 25, 50 28 L 50 78 C 47 75, 34 72, 22 75 Z" fill="url(#hLeft)" />
-              <path d="M 50 28 C 53 25, 66 22, 78 25 L 78 75 C 66 72, 53 75, 50 78 Z" fill="url(#hRight)" />
-              <polygon points="48,27 52,27 52,82 50,80 48,82" fill="url(#hRibbon)" />
-              <line x1="28" y1="36" x2="42" y2="36" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
-              <line x1="28" y1="44" x2="44" y2="44" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
-              <line x1="28" y1="52" x2="38" y2="52" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
-              <line x1="56" y1="36" x2="72" y2="36" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
-              <line x1="56" y1="44" x2="70" y2="44" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
-              <line x1="56" y1="52" x2="68" y2="52" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
-            </svg>
+            <img class="welcome-logo" src="assets/icon.png" alt="Handbook Icon" width="84" height="84">
             <h1>Handbook</h1>
             <p class="welcome-subtitle">Pure speed. Zero friction.</p>
             <div class="welcome-shortcuts">

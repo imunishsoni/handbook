@@ -121,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🎨 Identity & Branding
 - **Renamed to Handbook**: Distinct, elegant brand identity.
-- **New App Icon**: Custom macOS Big Sur squircle featuring an open illuminated handbook with radiant code line etchings and an emerald ribbon bookmark.
+- **New App Icon**: Custom macOS Big Sur squircle featuring a dimensional closed hardcover developer handbook in midnight slate with blind-debossed framing, spine binding ribs, emerald silk ribbon bookmark, elastic closure strap, corner clasps, and a radiant embossed `</>` code medallion.
 - **New CLI Command**: Terminal launcher `handbook` for instant project opening.
 
 ---

@@ -7,6 +7,7 @@ app.name = 'Handbook';
 let mainWindow;
 
 function createWindow() {
+  const iconPath = path.join(__dirname, 'assets', 'icon.png');
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -15,6 +16,7 @@ function createWindow() {
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 15, y: 12 },
     backgroundColor: '#0d1117',
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -381,6 +383,21 @@ ipcMain.handle('terminal:close', (_event, { id = 1 }) => {
 // ===== App Lifecycle =====
 
 app.whenReady().then(() => {
+  const iconPath = path.join(__dirname, 'assets', 'icon.png');
+  if (process.platform === 'darwin' && app.dock && fs.existsSync(iconPath)) {
+    try {
+      app.dock.setIcon(iconPath);
+    } catch (_) {}
+  }
+  if (app.setAboutPanelOptions) {
+    app.setAboutPanelOptions({
+      applicationName: 'Handbook',
+      applicationVersion: '2.4.0',
+      version: '2.4.0',
+      copyright: '© 2026 Munish Soni. Open-source under MIT License.',
+      iconPath: fs.existsSync(iconPath) ? iconPath : undefined,
+    });
+  }
   createMenu();
   createWindow();
 
