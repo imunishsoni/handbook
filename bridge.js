@@ -8,6 +8,8 @@
     const pendingRequests = new Map();
     const menuListeners = [];
     const cliListeners = [];
+    const terminalDataListeners = [];
+    const terminalExitListeners = [];
 
     window.__handleNativeResponse = (id, result, error) => {
       const p = pendingRequests.get(id);
@@ -30,6 +32,18 @@
       });
     };
 
+    window.__handleTerminalData = (id, base64) => {
+      terminalDataListeners.forEach((fn) => {
+        try { fn(id, base64); } catch (e) { console.error('Terminal data error:', e); }
+      });
+    };
+
+    window.__handleTerminalExit = (id, code) => {
+      terminalExitListeners.forEach((fn) => {
+        try { fn(id, code); } catch (e) { console.error('Terminal exit error:', e); }
+      });
+    };
+
     function sendNative(action, payload = null) {
       return new Promise((resolve, reject) => {
         const id = reqId++;
@@ -47,8 +61,18 @@
       writeFile: (filePath, content) => sendNative('writeFile', { path: filePath, content }),
       isDirectory: (filePath) => sendNative('isDirectory', { path: filePath }),
       getAllFiles: (rootPath) => sendNative('getAllFiles', { path: rootPath }),
+      getHomeDir: () => sendNative('getHomeDir'),
       onMenuAction: (callback) => menuListeners.push(callback),
       onCliOpen: (callback) => cliListeners.push(callback),
+
+      // Integrated Terminal API
+      terminalOpen: (options) => sendNative('terminalOpen', options),
+      terminalWrite: (id, data) => sendNative('terminalWrite', { id, data }),
+      terminalResize: (id, cols, rows) => sendNative('terminalResize', { id, cols, rows }),
+      terminalClose: (id) => sendNative('terminalClose', { id }),
+      onTerminalData: (callback) => terminalDataListeners.push(callback),
+      onTerminalExit: (callback) => terminalExitListeners.push(callback),
+
       platform: 'darwin',
       homedir: '/',
     };

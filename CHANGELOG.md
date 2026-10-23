@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.4.0] - 2026-10-23
+
+### 🖥 Integrated Native Terminal
+- **Native POSIX Pseudoterminal (PTY)**: Built-in Swift terminal engine utilizing Darwin `openpty` and `Process` for native, low-latency shell execution with zero external C dependencies.
+- **Full Shell & Environment Integration**: Automatically launches default login shell (`/bin/zsh`, `/bin/bash`, etc.) with full environment (`PATH`, `TERM=xterm-256color`, `COLORTERM=truecolor`), supporting interactive CLI workflows (`git`, `npm`, `top`, `vim`, `cargo`, etc.).
+- **xterm.js Rendering**: Embedded high-performance VT100 / xterm terminal emulator with full 256-color and truecolor ANSI support.
+- **Dynamic Theme Synchronization**: Terminal background, text, cursor, selection, and ANSI color palette automatically adapt in real-time when switching between Handbook's 5 curated color themes.
+- **Collapsible & Resizable Drawer**:
+  - Horizontal drag handle to adjust terminal height dynamically with persistent size remembered across restarts.
+  - Header actions: New Session / Restart (`+`), Clear Buffer (`⌕` / `⌃L`), Maximize / Restore (`⤢`), Close (`✕`).
+- **Shortcuts & Menus**:
+  - `⌃\`` (Ctrl+Backtick) or `⌘\`` global shortcut to toggle terminal from anywhere in the editor.
+  - `View > Toggle Integrated Terminal` in native macOS menu bar.
+  - Clickable `❯_ Terminal` indicator on the status bar.
+  - Command Palette actions: `View: Toggle Integrated Terminal`, `Terminal: Clear Terminal`, `Terminal: New Session`, `Terminal: Maximize / Restore Panel`.
+  - Welcome screen one-click shortcut for Integrated Terminal.
+- **Workspace Directory Binding**: Terminal automatically spawns in the currently active project/workspace directory.
+
+---
+
 ## [2.3.0] - 2026-10-19
 
 ### 🍎 Universal 2 Architecture & Broad macOS Compatibility

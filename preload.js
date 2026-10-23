@@ -25,6 +25,18 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('cli:open', (_event, targetPath) => callback(targetPath));
   },
 
+  // Integrated Terminal API
+  terminalOpen: (options) => ipcRenderer.invoke('terminal:open', options),
+  terminalWrite: (id, data) => ipcRenderer.invoke('terminal:write', { id, data }),
+  terminalResize: (id, cols, rows) => ipcRenderer.invoke('terminal:resize', { id, cols, rows }),
+  terminalClose: (id) => ipcRenderer.invoke('terminal:close', { id }),
+  onTerminalData: (callback) => {
+    ipcRenderer.on('terminal:data', (_event, id, base64) => callback(id, base64));
+  },
+  onTerminalExit: (callback) => {
+    ipcRenderer.on('terminal:exit', (_event, id, code) => callback(id, code));
+  },
+
   // Platform
   platform: process.platform,
   homedir: os.homedir(),

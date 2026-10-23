@@ -1,11 +1,178 @@
 import AppKit
 import WebKit
 import Foundation
+import Darwin
 
 // ============================================================
 //  Handbook — Native macOS High Performance App
-//  Target: Apple Silicon ARM64 (Metal GPU, Native WKWebView)
+//  Target: Universal 2 (Apple Silicon ARM64 + Intel x86_64)
 // ============================================================
+
+class TerminalSession {
+    let id: Int
+    var masterFd: Int32
+    var process: Process?
+    var readSource: DispatchSourceRead?
+    var isRunning: Bool = false
+
+    init(id: Int, masterFd: Int32) {
+        self.id = id
+        self.masterFd = masterFd
+    }
+
+    func close() {
+        isRunning = false
+        if let source = readSource {
+            source.cancel()
+            readSource = nil
+        }
+        if let proc = process, proc.isRunning {
+            proc.terminate()
+        }
+        process = nil
+        if masterFd >= 0 {
+            Darwin.close(masterFd)
+            masterFd = -1
+        }
+    }
+}
+
+class TerminalManager {
+    static let shared = TerminalManager()
+    private var sessions: [Int: TerminalSession] = [:]
+    private let queue = DispatchQueue(label: "com.handbook.terminal", qos: .userInitiated)
+    weak var webView: WKWebView?
+
+    func open(id: Int, cols: Int, rows: Int, cwd: String?) -> Bool {
+        var masterFd: Int32 = 0
+        var slaveFd: Int32 = 0
+        guard openpty(&masterFd, &slaveFd, nil, nil, nil) == 0 else {
+            return false
+        }
+
+        var ws = winsize(ws_row: UInt16(max(1, rows)), ws_col: UInt16(max(2, cols)), ws_xpixel: 0, ws_ypixel: 0)
+        _ = ioctl(masterFd, TIOCSWINSZ, &ws)
+
+        let session = TerminalSession(id: id, masterFd: masterFd)
+        let slaveHandle = FileHandle(fileDescriptor: slaveFd, closeOnDealloc: false)
+
+        let proc = Process()
+        let envShell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+        let shellPath = FileManager.default.isExecutableFile(atPath: envShell) ? envShell : "/bin/zsh"
+        proc.executableURL = URL(fileURLWithPath: shellPath)
+        proc.arguments = ["-l"]
+
+        if let cwd = cwd, !cwd.isEmpty, FileManager.default.fileExists(atPath: cwd) {
+            proc.currentDirectoryURL = URL(fileURLWithPath: cwd)
+        } else {
+            proc.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
+        }
+
+        var env = ProcessInfo.processInfo.environment
+        env["TERM"] = "xterm-256color"
+        env["COLORTERM"] = "truecolor"
+        if env["LANG"] == nil {
+            env["LANG"] = "en_US.UTF-8"
+        }
+        env["TERM_PROGRAM"] = "Handbook"
+        let curPath = env["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin"
+        let extraPaths = "/opt/homebrew/bin:/usr/local/bin"
+        env["PATH"] = "\(extraPaths):\(curPath)"
+        proc.environment = env
+
+        proc.standardInput = slaveHandle
+        proc.standardOutput = slaveHandle
+        proc.standardError = slaveHandle
+
+        do {
+            try proc.run()
+        } catch {
+            Darwin.close(masterFd)
+            Darwin.close(slaveFd)
+            return false
+        }
+
+        Darwin.close(slaveFd)
+        session.process = proc
+        session.isRunning = true
+
+        let readSource = DispatchSource.makeReadSource(fileDescriptor: masterFd, queue: queue)
+        readSource.setEventHandler { [weak self, weak session] in
+            guard let self = self, let session = session, session.isRunning, session.masterFd >= 0 else { return }
+            var buffer = [UInt8](repeating: 0, count: 4096)
+            let bytesRead = Darwin.read(session.masterFd, &buffer, buffer.count)
+            if bytesRead > 0 {
+                let chunk = Data(buffer[0..<bytesRead])
+                let base64 = chunk.base64EncodedString()
+                DispatchQueue.main.async {
+                    self.webView?.evaluateJavaScript("window.__handleTerminalData(\(id), '\(base64)');", completionHandler: nil)
+                }
+            } else if bytesRead == 0 {
+                session.close()
+            }
+        }
+        readSource.setCancelHandler {
+            if session.masterFd >= 0 {
+                Darwin.close(session.masterFd)
+                session.masterFd = -1
+            }
+        }
+        session.readSource = readSource
+        readSource.resume()
+
+        proc.terminationHandler = { [weak self] p in
+            DispatchQueue.main.async {
+                self?.webView?.evaluateJavaScript("window.__handleTerminalExit(\(id), \(p.terminationStatus));", completionHandler: nil)
+            }
+        }
+
+        queue.sync {
+            sessions[id]?.close()
+            sessions[id] = session
+        }
+
+        return true
+    }
+
+    func write(id: Int, data: String) -> Bool {
+        return queue.sync {
+            guard let session = sessions[id], session.isRunning, session.masterFd >= 0 else { return false }
+            guard let rawData = data.data(using: .utf8) else { return false }
+            return rawData.withUnsafeBytes { ptr in
+                guard let base = ptr.baseAddress else { return false }
+                let written = Darwin.write(session.masterFd, base, ptr.count)
+                return written >= 0
+            }
+        }
+    }
+
+    func resize(id: Int, cols: Int, rows: Int) -> Bool {
+        return queue.sync {
+            guard let session = sessions[id], session.isRunning, session.masterFd >= 0 else { return false }
+            var ws = winsize(ws_row: UInt16(max(1, rows)), ws_col: UInt16(max(2, cols)), ws_xpixel: 0, ws_ypixel: 0)
+            return ioctl(session.masterFd, TIOCSWINSZ, &ws) == 0
+        }
+    }
+
+    func close(id: Int) -> Bool {
+        return queue.sync {
+            if let session = sessions.removeValue(forKey: id) {
+                session.close()
+                return true
+            }
+            return false
+        }
+    }
+
+    func closeAll() {
+        queue.sync {
+            for (_, s) in sessions {
+                s.close()
+            }
+            sessions.removeAll()
+        }
+    }
+}
 
 class NativeBridge: NSObject, WKScriptMessageHandler {
     weak var webView: WKWebView?
@@ -185,6 +352,36 @@ class NativeBridge: NSObject, WKScriptMessageHandler {
                 }
                 return nil
             }
+
+        case "terminalOpen":
+            let id = payload?["id"] as? Int ?? 1
+            let cols = payload?["cols"] as? Int ?? 80
+            let rows = payload?["rows"] as? Int ?? 24
+            let cwd = payload?["cwd"] as? String
+            TerminalManager.shared.webView = self.webView
+            let success = TerminalManager.shared.open(id: id, cols: cols, rows: rows, cwd: cwd)
+            return ["success": success, "id": id]
+
+        case "terminalWrite":
+            let id = payload?["id"] as? Int ?? 1
+            let data = payload?["data"] as? String ?? ""
+            let success = TerminalManager.shared.write(id: id, data: data)
+            return ["success": success]
+
+        case "terminalResize":
+            let id = payload?["id"] as? Int ?? 1
+            let cols = payload?["cols"] as? Int ?? 80
+            let rows = payload?["rows"] as? Int ?? 24
+            let success = TerminalManager.shared.resize(id: id, cols: cols, rows: rows)
+            return ["success": success]
+
+        case "terminalClose":
+            let id = payload?["id"] as? Int ?? 1
+            let success = TerminalManager.shared.close(id: id)
+            return ["success": success]
+
+        case "getHomeDir":
+            return NSHomeDirectory()
 
         default:
             return nil
@@ -396,6 +593,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         viewMenu.addItem(NSMenuItem(title: "Preferences: Color Theme…", action: #selector(menuThemePicker), keyEquivalent: ""))
         viewMenu.addItem(NSMenuItem.separator())
         viewMenu.addItem(NSMenuItem(title: "Toggle Sidebar", action: #selector(menuToggleSidebar), keyEquivalent: "b"))
+        let termItem = NSMenuItem(title: "Toggle Integrated Terminal", action: #selector(menuToggleTerminal), keyEquivalent: "`")
+        termItem.keyEquivalentModifierMask = [.control]
+        viewMenu.addItem(termItem)
         viewMenu.addItem(NSMenuItem.separator())
         viewMenu.addItem(NSMenuItem(title: "Zoom In", action: #selector(menuZoomIn), keyEquivalent: "="))
         viewMenu.addItem(NSMenuItem(title: "Zoom Out", action: #selector(menuZoomOut), keyEquivalent: "-"))
@@ -448,6 +648,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
     @objc func menuCommandPalette()     { triggerAction("commandPalette") }
     @objc func menuThemePicker()        { triggerAction("themePicker") }
     @objc func menuToggleSidebar()      { triggerAction("toggleSidebar") }
+    @objc func menuToggleTerminal()     { triggerAction("toggleTerminal") }
     @objc func menuGotoFile()           { triggerAction("gotoFile") }
     @objc func menuGotoLine()           { triggerAction("gotoLine") }
     @objc func menuGotoSymbol()         { triggerAction("gotoSymbol") }
@@ -457,7 +658,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
     @objc func menuZoomOut()            { triggerAction("zoomOut") }
     @objc func menuResetZoom()          { triggerAction("resetZoom") }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        TerminalManager.shared.closeAll()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        TerminalManager.shared.closeAll()
         return true
     }
 }

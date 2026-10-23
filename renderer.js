@@ -19,26 +19,44 @@ let currentThemeId = localStorage.getItem('handbook_theme') || 'handbook-neutral
 let preThemeId = currentThemeId;
 const recentlyClosedFiles = [];
 
+// ===== Terminal State =====
+let terminal = null;
+let terminalFitAddon = null;
+let terminalVisible = false;
+let terminalSessionId = 1;
+let terminalHeight = parseInt(localStorage.getItem('handbook_terminal_height') || '240', 10);
+let terminalMaximized = false;
+let terminalPreMaxHeight = 240;
+
 // ===== DOM refs =====
 const $ = (s) => document.querySelector(s);
-const titlebarTitle     = $('#titlebar-title');
-const titlebarDoc       = $('#titlebar-doc');
-const sidebar           = $('#sidebar');
-const sidebarTitleEl    = $('#sidebar-title');
-const fileTreeEl        = $('#file-tree');
-const tabsEl            = $('#tabs');
-const monacoEditorEl    = $('#monaco-editor');
-const welcomeScreen     = $('#welcome-screen');
-const statusTheme       = $('#status-theme');
-const statusPosition    = $('#status-position');
-const statusIndentation = $('#status-indentation');
-const statusEncoding    = $('#status-encoding');
-const statusLanguage    = $('#status-language');
-const statusMessage     = $('#status-message');
-const gotoOverlay       = $('#goto-overlay');
-const gotoInput         = $('#goto-input');
-const gotoResults       = $('#goto-results');
-const resizeHandle      = $('#sidebar-resize-handle');
+const titlebarTitle        = $('#titlebar-title');
+const titlebarDoc          = $('#titlebar-doc');
+const sidebar              = $('#sidebar');
+const sidebarTitleEl       = $('#sidebar-title');
+const fileTreeEl           = $('#file-tree');
+const tabsEl               = $('#tabs');
+const monacoEditorEl       = $('#monaco-editor');
+const welcomeScreen        = $('#welcome-screen');
+const statusTerminal       = $('#status-terminal');
+const statusTheme          = $('#status-theme');
+const statusPosition       = $('#status-position');
+const statusIndentation    = $('#status-indentation');
+const statusEncoding       = $('#status-encoding');
+const statusLanguage       = $('#status-language');
+const statusMessage        = $('#status-message');
+const gotoOverlay          = $('#goto-overlay');
+const gotoInput            = $('#goto-input');
+const gotoResults          = $('#goto-results');
+const resizeHandle         = $('#sidebar-resize-handle');
+const terminalPanel        = $('#terminal-panel');
+const terminalResizeHandle = $('#terminal-resize-handle');
+const terminalBody         = $('#terminal-body');
+const terminalCwdEl        = $('#terminal-cwd');
+const terminalNewBtn       = $('#terminal-new-btn');
+const terminalClearBtn     = $('#terminal-clear-btn');
+const terminalMaximizeBtn  = $('#terminal-maximize-btn');
+const terminalCloseBtn     = $('#terminal-close-btn');
 
 // ============================================================
 //  Theme System (Customizable & Neutral Default)
@@ -433,6 +451,37 @@ const THEMES = {
   }
 };
 
+function getTerminalTheme(themeId) {
+  const theme = THEMES[themeId] || THEMES['handbook-neutral'];
+  const ui = theme.ui;
+  const isDark = theme.isDark;
+
+  return {
+    background: ui['--bg-editor'] || '#1c1c1f',
+    foreground: ui['--text-primary'] || '#e4e4e7',
+    cursor: ui['--text-primary'] || '#e4e4e7',
+    cursorAccent: ui['--bg-editor'] || '#1c1c1f',
+    selectionBackground: ui['--bg-selected'] || 'rgba(255, 255, 255, 0.15)',
+    selectionForeground: ui['--text-primary'] || '#ffffff',
+    black: isDark ? '#1e1e22' : '#000000',
+    red: '#f87171',
+    green: '#4ade80',
+    yellow: '#facc15',
+    blue: '#60a5fa',
+    magenta: '#c084fc',
+    cyan: '#38bdf8',
+    white: isDark ? '#e4e4e7' : '#ffffff',
+    brightBlack: isDark ? '#52525b' : '#6b7280',
+    brightRed: '#ef4444',
+    brightGreen: '#22c55e',
+    brightYellow: '#eab308',
+    brightBlue: '#3b82f6',
+    brightMagenta: '#a855f7',
+    brightCyan: '#06b6d4',
+    brightWhite: isDark ? '#ffffff' : '#f9fafb',
+  };
+}
+
 function applyTheme(themeId, preview = false, notify = true) {
   const actualId = THEMES[themeId] ? themeId : 'handbook-neutral';
   const theme = THEMES[actualId];
@@ -448,7 +497,12 @@ function applyTheme(themeId, preview = false, notify = true) {
     monacoApi.editor.setTheme(actualId);
   }
 
-  // 3. Update Status Bar
+  // 3. Update Integrated Terminal Theme
+  if (terminal) {
+    terminal.options.theme = getTerminalTheme(actualId);
+  }
+
+  // 4. Update Status Bar
   if (statusTheme) {
     const shortName = theme.name.split(' (')[0].replace('Handbook ', '');
     statusTheme.textContent = '🎨 ' + shortName;
@@ -900,6 +954,10 @@ function registerSublimeKeybindings(ed) {
   ed.addCommand(km.CtrlCmd | kc.Digit7, () => switchToTabIndex(6));
   ed.addCommand(km.CtrlCmd | kc.Digit8, () => switchToTabIndex(7));
   ed.addCommand(km.CtrlCmd | kc.Digit9, () => switchToTabIndex(-1));
+
+  // Toggle Integrated Terminal: ⌃` / ⌘`
+  ed.addCommand(km.WinCtrl | kc.Backquote, () => toggleTerminal());
+  ed.addCommand(km.CtrlCmd | kc.Backquote, () => toggleTerminal());
 }
 
 // ============================================================
@@ -917,6 +975,9 @@ async function openFolder(folderPath) {
   await buildFileTree(folderPath, fileTreeEl, 0);
   allProjectFiles = await window.api.getAllFiles(folderPath);
   if (!sidebarVisible) toggleSidebar();
+  if (terminalCwdEl) {
+    terminalCwdEl.textContent = folderPath.replace(/^\/Users\/[^/]+/, '~');
+  }
   flash('Opened folder: ' + window.nodePath.basename(folderPath));
 }
 
@@ -1208,6 +1269,224 @@ function initSidebarResize() {
 }
 
 // ============================================================
+//  Integrated Terminal Management
+// ============================================================
+
+function decodeBase64Utf8(base64) {
+  try {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch (e) {
+    return atob(base64);
+  }
+}
+
+function initTerminal() {
+  if (terminal) return;
+  if (!window.Terminal) {
+    console.warn('xterm.js library not loaded');
+    return;
+  }
+
+  const theme = getTerminalTheme(currentThemeId);
+  terminal = new window.Terminal({
+    theme,
+    fontFamily: "'SF Mono', Menlo, Monaco, 'JetBrains Mono', Consolas, monospace",
+    fontSize: 12.5,
+    lineHeight: 1.25,
+    cursorBlink: true,
+    cursorStyle: 'bar',
+    scrollback: 5000,
+    allowTransparency: true,
+    convertEol: true,
+  });
+
+  if (window.FitAddon && window.FitAddon.FitAddon) {
+    terminalFitAddon = new window.FitAddon.FitAddon();
+    terminal.loadAddon(terminalFitAddon);
+  } else if (typeof window.FitAddon === 'function') {
+    terminalFitAddon = new window.FitAddon();
+    terminal.loadAddon(terminalFitAddon);
+  }
+
+  terminal.open(terminalBody);
+
+  // Forward user keystrokes to native PTY
+  terminal.onData((data) => {
+    window.api.terminalWrite(terminalSessionId, data);
+  });
+
+  // Receive data from native PTY
+  window.api.onTerminalData((id, base64) => {
+    if (id !== terminalSessionId) return;
+    try {
+      const text = decodeBase64Utf8(base64);
+      terminal.write(text);
+    } catch (err) {
+      console.error('Error writing terminal chunk:', err);
+    }
+  });
+
+  // Handle process termination
+  window.api.onTerminalExit((id, code) => {
+    if (id !== terminalSessionId) return;
+    terminal.write(`\r\n\x1b[90m[Process exited with code ${code}]\x1b[0m\r\n`);
+  });
+
+  spawnTerminalBackend();
+
+  window.addEventListener('resize', () => {
+    if (terminalVisible) {
+      fitTerminal();
+    }
+  });
+
+  initTerminalResize();
+}
+
+async function spawnTerminalBackend() {
+  const cwd = rootFolderPath || null;
+  const cols = terminal?.cols || 80;
+  const rows = terminal?.rows || 24;
+
+  if (terminalCwdEl) {
+    const displayPath = rootFolderPath
+      ? rootFolderPath.replace(/^\/Users\/[^/]+/, '~')
+      : '~';
+    terminalCwdEl.textContent = displayPath;
+  }
+
+  await window.api.terminalOpen({
+    id: terminalSessionId,
+    cols,
+    rows,
+    cwd,
+  });
+
+  fitTerminal();
+}
+
+function fitTerminal() {
+  if (!terminal || !terminalFitAddon || !terminalVisible) return;
+  try {
+    terminalFitAddon.fit();
+    window.api.terminalResize(terminalSessionId, terminal.cols, terminal.rows);
+  } catch (err) {
+    // Ignore transient resize errors
+  }
+}
+
+function toggleTerminal(forceState) {
+  const next = typeof forceState === 'boolean' ? forceState : !terminalVisible;
+  if (next === terminalVisible) return;
+
+  terminalVisible = next;
+  if (terminalVisible) {
+    terminalPanel.classList.remove('hidden');
+    terminalResizeHandle.classList.remove('hidden');
+    statusTerminal?.classList.add('active');
+
+    terminalPanel.style.height = `${terminalHeight}px`;
+
+    if (!terminal) {
+      initTerminal();
+    }
+
+    setTimeout(() => {
+      fitTerminal();
+      terminal?.focus();
+      editor?.layout();
+    }, 40);
+  } else {
+    terminalPanel.classList.add('hidden');
+    terminalResizeHandle.classList.add('hidden');
+    statusTerminal?.classList.remove('active');
+    editor?.layout();
+    editor?.focus();
+  }
+}
+
+function clearTerminal() {
+  if (!terminal) return;
+  terminal.clear();
+  window.api.terminalWrite(terminalSessionId, '\x0c');
+}
+
+async function restartTerminal() {
+  if (!terminal) {
+    toggleTerminal(true);
+    return;
+  }
+  terminal.clear();
+  terminal.reset();
+  await window.api.terminalClose(terminalSessionId);
+  terminalSessionId++;
+  await spawnTerminalBackend();
+  terminal.focus();
+}
+
+function toggleMaximizeTerminal() {
+  if (!terminalVisible) {
+    toggleTerminal(true);
+    return;
+  }
+  if (!terminalMaximized) {
+    terminalPreMaxHeight = terminalHeight;
+    const maxH = Math.round(window.innerHeight - 90);
+    terminalPanel.style.height = `${maxH}px`;
+    terminalMaximized = true;
+  } else {
+    terminalPanel.style.height = `${terminalPreMaxHeight}px`;
+    terminalMaximized = false;
+  }
+  fitTerminal();
+  editor?.layout();
+}
+
+function initTerminalResize() {
+  let isResizing = false;
+  let startY = 0;
+  let startH = 0;
+
+  terminalResizeHandle.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    startY = e.clientY;
+    startH = terminalPanel.getBoundingClientRect().height;
+    terminalResizeHandle.classList.add('active');
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    const dy = startY - e.clientY;
+    const maxH = window.innerHeight * 0.85;
+    const newH = Math.max(80, Math.min(maxH, startH + dy));
+    terminalHeight = Math.round(newH);
+    terminalPanel.style.height = `${terminalHeight}px`;
+    localStorage.setItem('handbook_terminal_height', String(terminalHeight));
+    fitTerminal();
+    editor?.layout();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isResizing) {
+      isResizing = false;
+      terminalResizeHandle.classList.remove('active');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      fitTerminal();
+      editor?.layout();
+    }
+  });
+}
+
+// ============================================================
 //  Minimap
 // ============================================================
 
@@ -1482,7 +1761,11 @@ function getCommands() {
 
     // View & Preferences
     { name: 'View: Toggle Sidebar',                   shortcut: '⌘B',      action: () => toggleSidebar() },
+    { name: 'View: Toggle Integrated Terminal',       shortcut: '⌃`',      action: () => toggleTerminal() },
     { name: 'View: Toggle Minimap',                   shortcut: '',        action: () => toggleMinimap() },
+    { name: 'Terminal: Clear Terminal',               shortcut: '',        action: () => clearTerminal() },
+    { name: 'Terminal: New Session',                  shortcut: '',        action: () => restartTerminal() },
+    { name: 'Terminal: Maximize / Restore Panel',     shortcut: '',        action: () => toggleMaximizeTerminal() },
     { name: 'View: Word Wrap Toggle',                 shortcut: '⌥Z',      action: () => {
       const cur = editor.getOption(monacoApi.editor.EditorOption.wordWrap);
       editor.updateOptions({ wordWrap: cur === 'off' ? 'on' : 'off' });
@@ -1574,6 +1857,13 @@ function initEvents() {
   // Status bar theme button
   statusTheme?.addEventListener('click', () => showGotoPanel('theme'));
 
+  // Terminal toggle & panel controls
+  statusTerminal?.addEventListener('click', () => toggleTerminal());
+  terminalCloseBtn?.addEventListener('click', () => toggleTerminal(false));
+  terminalClearBtn?.addEventListener('click', () => clearTerminal());
+  terminalNewBtn?.addEventListener('click', () => restartTerminal());
+  terminalMaximizeBtn?.addEventListener('click', () => toggleMaximizeTerminal());
+
   // Welcome screen shortcuts
   document.querySelectorAll('.shortcut[data-action]').forEach((el) => {
     el.addEventListener('click', () => {
@@ -1585,6 +1875,7 @@ function initEvents() {
       else if (a === 'commandPalette')  showGotoPanel('command');
       else if (a === 'gotoLine')        showGotoPanel('line');
       else if (a === 'gotoSymbol')      showGotoPanel('symbol');
+      else if (a === 'toggleTerminal')  toggleTerminal(true);
       else if (a === 'themePicker')     showGotoPanel('theme');
     });
   });
@@ -1603,6 +1894,7 @@ function initEvents() {
       replace:            () => editor?.getAction('editor.action.startFindReplaceAction')?.run(),
       commandPalette:     () => showGotoPanel('command'),
       themePicker:        () => showGotoPanel('theme'),
+      toggleTerminal:     () => toggleTerminal(),
       gotoFile:           () => showGotoPanel('file'),
       gotoLine:           () => showGotoPanel('line'),
       gotoSymbol:         () => showGotoPanel('symbol'),
@@ -1709,6 +2001,11 @@ function initEvents() {
     if (cmd && !shift && key === 'n') { e.preventDefault(); newFile(); return; }
     if (cmd && !shift && key === 'w') { e.preventDefault(); closeFile(activeFilePath); return; }
     if (cmd && !shift && key === 'b') { e.preventDefault(); toggleSidebar(); return; }
+    if ((e.ctrlKey && (e.key === '`' || e.code === 'Backquote' || e.key === '~')) || (cmd && e.key === '`')) {
+      e.preventDefault();
+      toggleTerminal();
+      return;
+    }
   });
 
   // Drag & drop

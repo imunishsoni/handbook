@@ -86,9 +86,9 @@ cat << 'EOF' > "$CONTENTS/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.3.0</string>
+    <string>2.4.0</string>
     <key>CFBundleVersion</key>
-    <string>2.3.0</string>
+    <string>2.4.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>10.15</string>
     <key>NSHighResolutionCapable</key>
@@ -122,6 +122,13 @@ cp "$DIR/renderer.js" "$WEB/"
 
 mkdir -p "$WEB/node_modules/monaco-editor/min"
 cp -R "$DIR/node_modules/monaco-editor/min/vs" "$WEB/node_modules/monaco-editor/min/"
+
+mkdir -p "$WEB/node_modules/xterm/lib"
+mkdir -p "$WEB/node_modules/xterm/css"
+mkdir -p "$WEB/node_modules/@xterm/addon-fit/lib"
+cp "$DIR/node_modules/xterm/lib/xterm.js" "$WEB/node_modules/xterm/lib/"
+cp "$DIR/node_modules/xterm/css/xterm.css" "$WEB/node_modules/xterm/css/"
+cp "$DIR/node_modules/@xterm/addon-fit/lib/addon-fit.js" "$WEB/node_modules/@xterm/addon-fit/lib/"
 
 echo "==> 7. Code-signing locally (ad-hoc)..."
 codesign --force --deep --sign - "$APP_BUNDLE"

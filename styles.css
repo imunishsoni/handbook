@@ -484,6 +484,148 @@ html, body {
   font-weight: 500;
 }
 
+#status-terminal {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+#status-terminal:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+#status-terminal.active {
+  color: var(--accent-cyan);
+  font-weight: 600;
+  background: rgba(147, 197, 253, 0.12);
+}
+
+/* ============================================================
+   Integrated Terminal
+   ============================================================ */
+#terminal-resize-handle {
+  height: 4px;
+  background: transparent;
+  cursor: row-resize;
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+#terminal-resize-handle:hover,
+#terminal-resize-handle.active {
+  background: var(--accent-purple);
+  box-shadow: 0 0 8px var(--accent-purple);
+}
+#terminal-resize-handle.hidden {
+  display: none;
+}
+
+#terminal-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-editor);
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+  height: 240px;
+  min-height: 80px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+#terminal-panel.hidden {
+  display: none;
+}
+
+#terminal-header {
+  height: 30px;
+  min-height: 30px;
+  background: var(--bg-titlebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  user-select: none;
+}
+
+#terminal-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.terminal-tab-icon {
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.terminal-cwd {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 400;
+  font-family: var(--font-mono);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#terminal-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#terminal-actions button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+#terminal-actions button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+#terminal-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  padding: 4px 6px;
+  background: var(--bg-editor);
+  overflow: hidden;
+}
+
+#terminal-body .xterm {
+  height: 100%;
+  padding: 2px;
+}
+
+#terminal-body .xterm-viewport {
+  background-color: transparent !important;
+}
+
 .status-sep {
   color: rgba(255, 255, 255, 0.15);
   margin: 0 4px;

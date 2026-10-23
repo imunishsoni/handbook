@@ -34,6 +34,7 @@ Most modern editors carry over 120 MB of bundled browser runtimes, spawn 4+ auxi
 - **⏱ Instant ~25ms Cold Startup**: Instantaneous launch from Spotlight, Launchpad, or Terminal without Chromium boot latency.
 - **🧠 ~25 MB RAM Footprint**: Backed by macOS's native system WebKit, sharing memory with the operating system rather than bundling an isolated Chromium engine.
 - **🎨 Customizable Themes with Neutral Default**: Features a refined, balanced graphite dark theme (`#1c1c1f`) designed to reduce eye strain, plus an instant interactive theme switcher (`⌘⇧P` -> "Preferences: Color Theme") supporting 5 curated themes (Handbook Neutral, Midnight Slate, Obsidian Black, Warm Coffee, Paper Light) with live arrow-key previews.
+- **🖥 Integrated Native Terminal**: Built-in POSIX pseudoterminal (PTY) running directly in Swift with xterm.js rendering, full ANSI truecolor support, login shell integration (`zsh`/`bash`), interactive tools (`git`, `top`, `cargo`, etc.), dynamic theme synchronization, and instant toggle with `⌃\`` (Ctrl+Backtick).
 - **⌨️ Sublime Text 4 Keymap**: Complete, 1:1 muscle memory compatibility including multi-cursor (`⌘D`, `⌃⌘G`, `⌘⇧L`), line operations (`⌘⇧D`, `⌘⇧K`, `⌘⌃↑/↓`), Go to Symbol (`⌘R`), and chords (`⌘K ...`).
 - **🚫 Zero Nag Popups**: No license reminders, registration prompts, or modal interruptions.
 
@@ -179,6 +180,7 @@ Handbook is designed with faithful, 1:1 muscle-memory keybindings matching Subli
 | `⌘ 1` .. `⌘ 8` | **Go to Tab 1–8** | Jump directly to tab index |
 | `⌘ 9` | **Go to Last Tab** | Jump directly to the last tab |
 | `⌘ ⇧ T` | **Reopen Closed Tab** | Restores the most recently closed tab |
+| `⌃ \`` | **Toggle Integrated Terminal** | Shows/hides bottom integrated terminal drawer |
 | `⌘ B` | **Toggle Sidebar** | Shows/hides project file tree |
 | `⌘ F` / `⌥ ⌘ F` | **Find / Replace** | Opens search and replace bar |
 

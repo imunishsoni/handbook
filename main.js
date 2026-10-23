@@ -142,6 +142,11 @@ function createMenu() {
           click: () => mainWindow?.webContents.send('menu:action', 'toggleSidebar'),
         },
         {
+          label: 'Toggle Integrated Terminal',
+          accelerator: 'Ctrl+`',
+          click: () => mainWindow?.webContents.send('menu:action', 'toggleTerminal'),
+        },
+        {
           label: 'Toggle Minimap',
           click: () => mainWindow?.webContents.send('menu:action', 'toggleMinimap'),
         },
@@ -304,6 +309,73 @@ ipcMain.handle('fs:getAllFiles', async (_event, rootPath) => {
 
   await walk(rootPath, 0);
   return results;
+});
+
+// ===== Integrated Terminal IPC (Electron) =====
+const { spawn } = require('child_process');
+const os = require('os');
+const electronTerminalSessions = new Map();
+
+ipcMain.handle('terminal:open', (_event, { id = 1, cols = 80, rows = 24, cwd = null } = {}) => {
+  try {
+    const shellPath = process.env.SHELL || '/bin/zsh';
+    const workingDir = cwd && fs.existsSync(cwd) ? cwd : os.homedir();
+    const env = {
+      ...process.env,
+      TERM: 'xterm-256color',
+      COLORTERM: 'truecolor',
+      TERM_PROGRAM: 'Handbook',
+      PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH || ''}`,
+    };
+
+    const child = spawn(shellPath, ['-l'], {
+      cwd: workingDir,
+      env,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    child.stdout.on('data', (chunk) => {
+      mainWindow?.webContents.send('terminal:data', id, chunk.toString('base64'));
+    });
+
+    child.stderr.on('data', (chunk) => {
+      mainWindow?.webContents.send('terminal:data', id, chunk.toString('base64'));
+    });
+
+    child.on('close', (code) => {
+      mainWindow?.webContents.send('terminal:exit', id, code ?? 0);
+      electronTerminalSessions.delete(id);
+    });
+
+    electronTerminalSessions.set(id, child);
+    return { success: true, id };
+  } catch (err) {
+    console.error('Failed to spawn terminal:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('terminal:write', (_event, { id = 1, data = '' }) => {
+  const child = electronTerminalSessions.get(id);
+  if (child && child.stdin && !child.stdin.destroyed) {
+    child.stdin.write(data);
+    return { success: true };
+  }
+  return { success: false };
+});
+
+ipcMain.handle('terminal:resize', (_event) => {
+  return { success: true };
+});
+
+ipcMain.handle('terminal:close', (_event, { id = 1 }) => {
+  const child = electronTerminalSessions.get(id);
+  if (child) {
+    child.kill();
+    electronTerminalSessions.delete(id);
+    return { success: true };
+  }
+  return { success: false };
 });
 
 // ===== App Lifecycle =====
