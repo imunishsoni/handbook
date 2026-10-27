@@ -1789,13 +1789,10 @@ function getCommands() {
       const cur = editor.getOption(monacoApi.editor.EditorOption.wordWrap);
       editor.updateOptions({ wordWrap: cur === 'off' ? 'on' : 'off' });
     }},
+    { name: 'View: Zoom In',                          shortcut: `${mod}+`,               action: () => { fontSize += 2; editor?.updateOptions({ fontSize }); }},
+    { name: 'View: Zoom Out',                         shortcut: `${mod}-`,               action: () => { fontSize = Math.max(8, fontSize - 2); editor?.updateOptions({ fontSize }); }},
+    { name: 'View: Reset Zoom',                       shortcut: `${mod}0`,               action: () => { fontSize = 14; editor?.updateOptions({ fontSize }); }},
     { name: 'Preferences: Color Theme',               shortcut: '',                      action: () => showGotoPanel('theme') },
-  ];
-}
-    { name: 'View: Zoom In',                          shortcut: '⌘+',      action: () => { fontSize += 2; editor.updateOptions({ fontSize }); }},
-    { name: 'View: Zoom Out',                         shortcut: '⌘-',      action: () => { fontSize = Math.max(8, fontSize - 2); editor.updateOptions({ fontSize }); }},
-    { name: 'View: Reset Zoom',                       shortcut: '⌘0',      action: () => { fontSize = 14; editor.updateOptions({ fontSize }); }},
-    { name: 'Preferences: Color Theme',               shortcut: '',        action: () => showGotoPanel('theme') },
   ];
 }
 
@@ -2092,11 +2089,17 @@ function initPlatformUI() {
 async function initApp() {
   initPlatformUI();
   applyTheme(currentThemeId, false, false);
-  await initMonaco();
-  applyTheme(currentThemeId, false, false);
   initEvents();
   updateStatusBar();
   updateTitle();
+
+  try {
+    await initMonaco();
+    applyTheme(currentThemeId, false, false);
+  } catch (err) {
+    console.error('Monaco init error:', err);
+  }
+
   console.log('%c✦ Handbook ready', 'color: #38bdf8; font-weight: bold; font-size: 14px;');
 }
 
