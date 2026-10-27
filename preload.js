@@ -17,6 +17,12 @@ contextBridge.exposeInMainWorld('api', {
   isDirectory: (filePath) => ipcRenderer.invoke('fs:isDirectory', filePath),
   getAllFiles: (rootPath) => ipcRenderer.invoke('fs:getAllFiles', rootPath),
 
+  // Window Controls
+  minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
+  maximizeWindow: () => ipcRenderer.invoke('window:maximize'),
+  closeWindow: () => ipcRenderer.invoke('window:close'),
+  isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+
   // Events from main process
   onMenuAction: (callback) => {
     ipcRenderer.on('menu:action', (_event, action) => callback(action));
@@ -37,8 +43,11 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('terminal:exit', (_event, id, code) => callback(id, code));
   },
 
-  // Platform
+  // Platform Information
   platform: process.platform,
+  isMac: process.platform === 'darwin',
+  isWindows: process.platform === 'win32',
+  isLinux: process.platform === 'linux',
   homedir: os.homedir(),
 });
 
@@ -49,4 +58,6 @@ contextBridge.exposeInMainWorld('nodePath', {
   extname: (p) => path.extname(p),
   sep: path.sep,
   relative: (from, to) => path.relative(from, to),
+  normalize: (p) => path.normalize(p),
+  isAbsolute: (p) => path.isAbsolute(p),
 });

@@ -77,6 +77,20 @@ html, body {
   z-index: 100;
 }
 
+/* Platform-aware titlebar adaptations */
+body.platform-darwin #titlebar {
+  justify-content: center;
+  padding-left: 80px;
+  padding-right: 80px;
+}
+
+body.platform-win32 #titlebar,
+body.platform-linux #titlebar {
+  justify-content: flex-start;
+  padding-left: 14px;
+  padding-right: 145px;
+}
+
 #titlebar-title {
   font-size: 12px;
   color: var(--text-muted);

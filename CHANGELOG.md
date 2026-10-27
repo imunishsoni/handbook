@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.5.0] - 2026-10-27
+
+### 🌍 Universal Platform Independence
+- **Full Cross-Platform Support**: Built to run natively and consistently across **macOS**, **Linux** (Ubuntu, Debian, Fedora, Arch), and **Windows** (10 & 11).
+- **Native OS Windowing & Titlebars**:
+  - **macOS**: `hiddenInset` titlebar with native traffic lights and centered brand title.
+  - **Windows & Linux**: Modern `titleBarOverlay` window controls with native minimize, maximize, and close controls themed to Handbook's dark styling.
+  - Platform-specific CSS (`.platform-darwin`, `.platform-win32`, `.platform-linux`) for tailored titlebar padding and controls alignment.
+- **Cross-Platform Integrated Terminal**:
+  - **Windows**: Automatic detection and execution of PowerShell 7 (`pwsh.exe`), Windows PowerShell, or Command Prompt (`cmd.exe`) without auxiliary console popups (`windowsHide: true`).
+  - **Linux**: Automatic login shell spawning via `$SHELL`, `/bin/bash`, or `/bin/sh`.
+  - **macOS**: POSIX PTY login shell (`$SHELL` / `/bin/zsh`).
+- **Dynamic Keybinding Adaptation**:
+  - Automatically translates shortcuts based on operating system (`⌘` / `⌥` on Mac; `Ctrl` / `Alt` / `Shift` on Windows & Linux).
+  - Dynamic Welcome Screen keyboard badges (`<kbd>Ctrl</kbd>` on Windows/Linux vs `<kbd>⌘</kbd>` on macOS).
+  - Sublime Text 4 keybindings matching standard muscle memory on all OSes (`Ctrl+D`, `Ctrl+Shift+L`, `Ctrl+R`, `Alt+F3`).
+- **Cross-Platform CLI Launchers**:
+  - Universal Node.js launcher `bin/handbook.js` (callable via `npx` or `npm link`).
+  - POSIX shell launcher `bin/handbook` for Linux & macOS.
+  - Windows Command Prompt launcher `bin/handbook.cmd`.
+  - Windows PowerShell launcher `bin/handbook.ps1`.
+- **Multi-OS Icon Assets**:
+  - Automated generation of Windows multi-resolution `build/icon.ico` containing 16px, 32px, 64px, 128px, and 256px slices alongside macOS `build/icon.icns` and high-res PNG.
+- **Cross-Platform CI & Packaging Pipeline**:
+  - Multi-platform GitHub Actions CI matrix building and testing across `macos-14`, `ubuntu-latest`, and `windows-latest`.
+  - New `npm run dist:all` and `scripts/build-dist.js` packaging pipeline producing Linux tarballs/zips, Windows portable zips, and macOS DMGs.
+
+---
+
 ## [2.4.0] - 2026-10-23
 
 ### 🖥 Integrated Native Terminal

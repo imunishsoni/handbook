@@ -3,6 +3,14 @@
 // ============================================================
 
 // ===== State =====
+const isMac = (window.api?.platform === 'darwin') ||
+  (window.api?.isMac) ||
+  (typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent));
+const isWindows = (window.api?.platform === 'win32') ||
+  (window.api?.isWindows) ||
+  (typeof navigator !== 'undefined' && /Win/.test(navigator.platform || navigator.userAgent));
+const isLinux = !isMac && !isWindows;
+
 let editor = null;
 let monacoApi = null;
 const openFiles = new Map();      // path -> { model, viewState, modified, savedContent, name }
@@ -1697,79 +1705,93 @@ function handleGotoKey(e) {
 // ============================================================
 
 function getCommands() {
+  const mod = isMac ? '⌘' : 'Ctrl+';
+  const alt = isMac ? '⌥' : 'Alt+';
+  const shift = isMac ? '⇧' : 'Shift+';
+  const ctrl = isMac ? '⌃' : 'Ctrl+';
+  const arrowRight = isMac ? '→' : 'Right';
+  const arrowLeft = isMac ? '←' : 'Left';
+  const arrowUp = isMac ? '↑' : 'Up';
+  const arrowDown = isMac ? '↓' : 'Down';
+  const enter = isMac ? '↵' : 'Enter';
+  const backspace = isMac ? '⌫' : 'Backspace';
+
   return [
     // File & Tab Navigation
-    { name: 'File: New File',                         shortcut: '⌘N',      action: () => newFile() },
-    { name: 'File: Open File…',                       shortcut: '⌘O',      action: () => openFileDialog() },
-    { name: 'File: Open Workspace Folder…',           shortcut: '⌘⇧O',     action: () => openFolder() },
-    { name: 'File: Save',                             shortcut: '⌘S',      action: () => saveFile() },
-    { name: 'File: Close Tab',                        shortcut: '⌘W',      action: () => closeFile(activeFilePath) },
-    { name: 'File: Reopen Closed Tab',                shortcut: '⌘⇧T',     action: () => reopenClosedTab() },
-    { name: 'Tab: Next Tab',                          shortcut: '⌥⌘→',     action: () => nextTab() },
-    { name: 'Tab: Previous Tab',                      shortcut: '⌥⌘←',     action: () => prevTab() },
+    { name: 'File: New File',                         shortcut: `${mod}N`,               action: () => newFile() },
+    { name: 'File: Open File…',                       shortcut: `${mod}O`,               action: () => openFileDialog() },
+    { name: 'File: Open Workspace Folder…',           shortcut: `${mod}${shift}O`,      action: () => openFolder() },
+    { name: 'File: Save',                             shortcut: `${mod}S`,               action: () => saveFile() },
+    { name: 'File: Close Tab',                        shortcut: `${mod}W`,               action: () => closeFile(activeFilePath) },
+    { name: 'File: Reopen Closed Tab',                shortcut: `${mod}${shift}T`,      action: () => reopenClosedTab() },
+    { name: 'Tab: Next Tab',                          shortcut: `${alt}${mod}${arrowRight}`, action: () => nextTab() },
+    { name: 'Tab: Previous Tab',                      shortcut: `${alt}${mod}${arrowLeft}`,  action: () => prevTab() },
 
     // Go To (Sublime Style)
-    { name: 'Go to: File…',                           shortcut: '⌘P',      action: () => showGotoPanel('file') },
-    { name: 'Go to: Symbol in File…',                 shortcut: '⌘R',      action: () => showGotoPanel('symbol') },
-    { name: 'Go to: Line…',                           shortcut: '⌘G',      action: () => showGotoPanel('line') },
-    { name: 'Go to: Word in File…',                   shortcut: '⌘;',      action: () => showGotoPanel('word') },
-    { name: 'Go to: Matching Bracket',                shortcut: '⌃M',      action: () => editor?.getAction('editor.action.jumpToBracket')?.run() },
+    { name: 'Go to: File…',                           shortcut: `${mod}P`,               action: () => showGotoPanel('file') },
+    { name: 'Go to: Symbol in File…',                 shortcut: `${mod}R`,               action: () => showGotoPanel('symbol') },
+    { name: 'Go to: Line…',                           shortcut: `${mod}G`,               action: () => showGotoPanel('line') },
+    { name: 'Go to: Word in File…',                   shortcut: `${mod};`,               action: () => showGotoPanel('word') },
+    { name: 'Go to: Matching Bracket',                shortcut: `${ctrl}M`,              action: () => editor?.getAction('editor.action.jumpToBracket')?.run() },
 
     // Selection & Multi-Cursor
-    { name: 'Selection: Quick Add Next',              shortcut: '⌘D',      action: () => editor?.getAction('editor.action.addSelectionToNextFindMatch')?.run() },
-    { name: 'Selection: Quick Skip Next',             shortcut: '⌘K ⌘D',   action: () => editor?.getAction('editor.action.moveSelectionToNextFindMatch')?.run() },
-    { name: 'Selection: Select All Occurrences',      shortcut: '⌃⌘G',     action: () => editor?.getAction('editor.action.selectHighlights')?.run() },
-    { name: 'Selection: Split into Lines',            shortcut: '⌘⇧L',     action: () => splitSelectionIntoLines() },
-    { name: 'Selection: Expand to Line',              shortcut: '⌘L',      action: () => expandSelectionToLine() },
-    { name: 'Selection: Select to Bracket',           shortcut: '⌃⇧M',     action: () => editor?.getAction('editor.action.selectToBracket')?.run() },
-    { name: 'Selection: Add Cursor Above',            shortcut: '⌘⌥↑',    action: () => editor?.getAction('editor.action.insertCursorAbove')?.run() },
-    { name: 'Selection: Add Cursor Below',            shortcut: '⌘⌥↓',    action: () => editor?.getAction('editor.action.insertCursorBelow')?.run() },
-    { name: 'Selection: Soft Undo (Undo Cursor)',     shortcut: '⌘U',      action: () => editor?.trigger('keyboard', 'cursorUndo') },
-    { name: 'Selection: Soft Redo (Redo Cursor)',     shortcut: '⌘⇧U',    action: () => editor?.trigger('keyboard', 'cursorRedo') },
+    { name: 'Selection: Quick Add Next',              shortcut: `${mod}D`,               action: () => editor?.getAction('editor.action.addSelectionToNextFindMatch')?.run() },
+    { name: 'Selection: Quick Skip Next',             shortcut: `${mod}K ${mod}D`,       action: () => editor?.getAction('editor.action.moveSelectionToNextFindMatch')?.run() },
+    { name: 'Selection: Select All Occurrences',      shortcut: isMac ? '⌃⌘G' : 'Alt+F3', action: () => editor?.getAction('editor.action.selectHighlights')?.run() },
+    { name: 'Selection: Split into Lines',            shortcut: `${mod}${shift}L`,      action: () => splitSelectionIntoLines() },
+    { name: 'Selection: Expand to Line',              shortcut: `${mod}L`,               action: () => expandSelectionToLine() },
+    { name: 'Selection: Select to Bracket',           shortcut: `${ctrl}${shift}M`,      action: () => editor?.getAction('editor.action.selectToBracket')?.run() },
+    { name: 'Selection: Add Cursor Above',            shortcut: `${mod}${alt}${arrowUp}`, action: () => editor?.getAction('editor.action.insertCursorAbove')?.run() },
+    { name: 'Selection: Add Cursor Below',            shortcut: `${mod}${alt}${arrowDown}`, action: () => editor?.getAction('editor.action.insertCursorBelow')?.run() },
+    { name: 'Selection: Soft Undo (Undo Cursor)',     shortcut: `${mod}U`,               action: () => editor?.trigger('keyboard', 'cursorUndo') },
+    { name: 'Selection: Soft Redo (Redo Cursor)',     shortcut: `${mod}${shift}U`,      action: () => editor?.trigger('keyboard', 'cursorRedo') },
 
     // Line Editing
-    { name: 'Line: Duplicate Line / Selection',       shortcut: '⌘⇧D',    action: () => duplicateLineOrSelection() },
-    { name: 'Line: Delete Line',                      shortcut: '⌘⇧K',    action: () => editor?.getAction('editor.action.deleteLines')?.run() },
-    { name: 'Line: Move Line Up',                     shortcut: '⌘⌃↑',     action: () => editor?.getAction('editor.action.moveLinesUpAction')?.run() },
-    { name: 'Line: Move Line Down',                   shortcut: '⌘⌃↓',     action: () => editor?.getAction('editor.action.moveLinesDownAction')?.run() },
-    { name: 'Line: Join Lines',                       shortcut: '⌘J',      action: () => editor?.getAction('editor.action.joinLines')?.run() },
-    { name: 'Line: Insert Line Below',                shortcut: '⌘↵',      action: () => editor?.getAction('editor.action.insertLineAfter')?.run() },
-    { name: 'Line: Insert Line Above',                shortcut: '⌘⇧↵',    action: () => editor?.getAction('editor.action.insertLineBefore')?.run() },
-    { name: 'Line: Indent Line',                      shortcut: '⌘]',      action: () => editor?.getAction('editor.action.indentLines')?.run() },
-    { name: 'Line: Outdent Line',                     shortcut: '⌘[',      action: () => editor?.getAction('editor.action.outdentLines')?.run() },
-    { name: 'Line: Delete to End of Line',            shortcut: '⌘K ⌘K',   action: () => deleteToEndOfLine() },
-    { name: 'Line: Delete to Start of Line',          shortcut: '⌘K ⌘⌫',  action: () => deleteToStartOfLine() },
+    { name: 'Line: Duplicate Line / Selection',       shortcut: `${mod}${shift}D`,      action: () => duplicateLineOrSelection() },
+    { name: 'Line: Delete Line',                      shortcut: `${mod}${shift}K`,      action: () => editor?.getAction('editor.action.deleteLines')?.run() },
+    { name: 'Line: Move Line Up',                     shortcut: `${mod}${ctrl}${arrowUp}`, action: () => editor?.getAction('editor.action.moveLinesUpAction')?.run() },
+    { name: 'Line: Move Line Down',                   shortcut: `${mod}${ctrl}${arrowDown}`, action: () => editor?.getAction('editor.action.moveLinesDownAction')?.run() },
+    { name: 'Line: Join Lines',                       shortcut: `${mod}J`,               action: () => editor?.getAction('editor.action.joinLines')?.run() },
+    { name: 'Line: Insert Line Below',                shortcut: `${mod}${enter}`,        action: () => editor?.getAction('editor.action.insertLineAfter')?.run() },
+    { name: 'Line: Insert Line Above',                shortcut: `${mod}${shift}${enter}`, action: () => editor?.getAction('editor.action.insertLineBefore')?.run() },
+    { name: 'Line: Indent Line',                      shortcut: `${mod}]`,               action: () => editor?.getAction('editor.action.indentLines')?.run() },
+    { name: 'Line: Outdent Line',                     shortcut: `${mod}[`,               action: () => editor?.getAction('editor.action.outdentLines')?.run() },
+    { name: 'Line: Delete to End of Line',            shortcut: `${mod}K ${mod}K`,       action: () => deleteToEndOfLine() },
+    { name: 'Line: Delete to Start of Line',          shortcut: `${mod}K ${mod}${backspace}`, action: () => deleteToStartOfLine() },
 
     // Code & Formatting
-    { name: 'Code: Toggle Line Comment',              shortcut: '⌘/',      action: () => editor?.getAction('editor.action.commentLine')?.run() },
-    { name: 'Code: Toggle Block Comment',             shortcut: '⌥⌘/',     action: () => editor?.getAction('editor.action.blockComment')?.run() },
-    { name: 'Code: Fold Block',                       shortcut: '⌥⌘[',     action: () => editor?.getAction('editor.fold')?.run() },
-    { name: 'Code: Unfold Block',                     shortcut: '⌥⌘]',     action: () => editor?.getAction('editor.unfold')?.run() },
-    { name: 'Code: Fold All',                         shortcut: '⌘K ⌘1',   action: () => editor?.getAction('editor.foldAll')?.run() },
-    { name: 'Code: Unfold All',                       shortcut: '⌘K ⌘J',   action: () => editor?.getAction('editor.unfoldAll')?.run() },
-    { name: 'Code: Format Document',                  shortcut: '⌥⇧F',    action: () => editor?.getAction('editor.action.formatDocument')?.run() },
-    { name: 'Code: Sort Lines Ascending',             shortcut: 'F5',      action: () => editor?.getAction('editor.action.sortLinesAscending')?.run() },
-    { name: 'Code: Sort Lines Descending',            shortcut: '⌃F5',     action: () => editor?.getAction('editor.action.sortLinesDescending')?.run() },
-    { name: 'Code: Transform to Uppercase',           shortcut: '⌘K ⌘U',   action: () => editor?.getAction('editor.action.transformToUppercase')?.run() },
-    { name: 'Code: Transform to Lowercase',           shortcut: '⌘K ⌘L',   action: () => editor?.getAction('editor.action.transformToLowercase')?.run() },
-    { name: 'Code: Transpose Characters',             shortcut: '⌃T',      action: () => editor?.getAction('editor.action.transposeLetters')?.run() },
-    { name: 'Code: Trim Trailing Whitespace',         shortcut: '',        action: () => editor?.getAction('editor.action.trimTrailingWhitespace')?.run() },
+    { name: 'Code: Toggle Line Comment',              shortcut: `${mod}/`,               action: () => editor?.getAction('editor.action.commentLine')?.run() },
+    { name: 'Code: Toggle Block Comment',             shortcut: `${alt}${mod}/`,         action: () => editor?.getAction('editor.action.blockComment')?.run() },
+    { name: 'Code: Fold Block',                       shortcut: `${alt}${mod}[`,         action: () => editor?.getAction('editor.fold')?.run() },
+    { name: 'Code: Unfold Block',                     shortcut: `${alt}${mod}]`,         action: () => editor?.getAction('editor.unfold')?.run() },
+    { name: 'Code: Fold All',                         shortcut: `${mod}K ${mod}1`,       action: () => editor?.getAction('editor.foldAll')?.run() },
+    { name: 'Code: Unfold All',                       shortcut: `${mod}K ${mod}J`,       action: () => editor?.getAction('editor.unfoldAll')?.run() },
+    { name: 'Code: Format Document',                  shortcut: `${alt}${shift}F`,       action: () => editor?.getAction('editor.action.formatDocument')?.run() },
+    { name: 'Code: Sort Lines Ascending',             shortcut: 'F5',                    action: () => editor?.getAction('editor.action.sortLinesAscending')?.run() },
+    { name: 'Code: Sort Lines Descending',            shortcut: `${ctrl}F5`,             action: () => editor?.getAction('editor.action.sortLinesDescending')?.run() },
+    { name: 'Code: Transform to Uppercase',           shortcut: `${mod}K ${mod}U`,       action: () => editor?.getAction('editor.action.transformToUppercase')?.run() },
+    { name: 'Code: Transform to Lowercase',           shortcut: `${mod}K ${mod}L`,       action: () => editor?.getAction('editor.action.transformToLowercase')?.run() },
+    { name: 'Code: Transpose Characters',             shortcut: `${ctrl}T`,              action: () => editor?.getAction('editor.action.transposeLetters')?.run() },
+    { name: 'Code: Trim Trailing Whitespace',         shortcut: '',                      action: () => editor?.getAction('editor.action.trimTrailingWhitespace')?.run() },
 
     // Find & Replace
-    { name: 'Find: Find…',                            shortcut: '⌘F',      action: () => editor?.getAction('actions.find')?.run() },
-    { name: 'Find: Replace…',                         shortcut: '⌥⌘F',     action: () => editor?.getAction('editor.action.startFindReplaceAction')?.run() },
+    { name: 'Find: Find…',                            shortcut: `${mod}F`,               action: () => editor?.getAction('actions.find')?.run() },
+    { name: 'Find: Replace…',                         shortcut: `${alt}${mod}F`,         action: () => editor?.getAction('editor.action.startFindReplaceAction')?.run() },
 
     // View & Preferences
-    { name: 'View: Toggle Sidebar',                   shortcut: '⌘B',      action: () => toggleSidebar() },
-    { name: 'View: Toggle Integrated Terminal',       shortcut: '⌃`',      action: () => toggleTerminal() },
-    { name: 'View: Toggle Minimap',                   shortcut: '',        action: () => toggleMinimap() },
-    { name: 'Terminal: Clear Terminal',               shortcut: '',        action: () => clearTerminal() },
-    { name: 'Terminal: New Session',                  shortcut: '',        action: () => restartTerminal() },
-    { name: 'Terminal: Maximize / Restore Panel',     shortcut: '',        action: () => toggleMaximizeTerminal() },
-    { name: 'View: Word Wrap Toggle',                 shortcut: '⌥Z',      action: () => {
+    { name: 'View: Toggle Sidebar',                   shortcut: `${mod}B`,               action: () => toggleSidebar() },
+    { name: 'View: Toggle Integrated Terminal',       shortcut: `${ctrl}\``,              action: () => toggleTerminal() },
+    { name: 'View: Toggle Minimap',                   shortcut: '',                      action: () => toggleMinimap() },
+    { name: 'Terminal: Clear Terminal',               shortcut: '',                      action: () => clearTerminal() },
+    { name: 'Terminal: New Session',                  shortcut: `${ctrl}${shift}\``,     action: () => restartTerminal() },
+    { name: 'Terminal: Maximize / Restore Panel',     shortcut: '',                      action: () => toggleMaximizeTerminal() },
+    { name: 'View: Word Wrap Toggle',                 shortcut: `${alt}Z`,               action: () => {
       const cur = editor.getOption(monacoApi.editor.EditorOption.wordWrap);
       editor.updateOptions({ wordWrap: cur === 'off' ? 'on' : 'off' });
     }},
+    { name: 'Preferences: Color Theme',               shortcut: '',                      action: () => showGotoPanel('theme') },
+  ];
+}
     { name: 'View: Zoom In',                          shortcut: '⌘+',      action: () => { fontSize += 2; editor.updateOptions({ fontSize }); }},
     { name: 'View: Zoom Out',                         shortcut: '⌘-',      action: () => { fontSize = Math.max(8, fontSize - 2); editor.updateOptions({ fontSize }); }},
     { name: 'View: Reset Zoom',                       shortcut: '⌘0',      action: () => { fontSize = 14; editor.updateOptions({ fontSize }); }},
@@ -1895,6 +1917,8 @@ function initEvents() {
       commandPalette:     () => showGotoPanel('command'),
       themePicker:        () => showGotoPanel('theme'),
       toggleTerminal:     () => toggleTerminal(),
+      newTerminal:        () => restartTerminal(),
+      clearTerminal:      () => clearTerminal(),
       gotoFile:           () => showGotoPanel('file'),
       gotoLine:           () => showGotoPanel('line'),
       gotoSymbol:         () => showGotoPanel('symbol'),
@@ -1922,7 +1946,7 @@ function initEvents() {
 
   // Global keyboard shortcuts (when Monaco doesn't have focus or across application)
   document.addEventListener('keydown', (e) => {
-    const cmd = e.metaKey || e.ctrlKey;
+    const cmd = isMac ? e.metaKey : e.ctrlKey;
     const opt = e.altKey;
     const shift = e.shiftKey;
     const key = e.key.toLowerCase();
@@ -2043,10 +2067,30 @@ function initEvents() {
 }
 
 // ============================================================
+//  Platform UI Adaptations
+// ============================================================
+
+function initPlatformUI() {
+  document.body.classList.add(isMac ? 'platform-darwin' : isWindows ? 'platform-win32' : 'platform-linux');
+
+  // Adapt Welcome screen keyboard shortcut badges on Windows and Linux
+  if (!isMac) {
+    document.querySelectorAll('.welcome-shortcuts kbd').forEach((kbd) => {
+      const text = kbd.textContent.trim();
+      if (text === '⌘') kbd.textContent = 'Ctrl';
+      else if (text === '⇧') kbd.textContent = 'Shift';
+      else if (text === '⌥') kbd.textContent = 'Alt';
+      else if (text === '⌃') kbd.textContent = 'Ctrl';
+    });
+  }
+}
+
+// ============================================================
 //  Bootstrap
 // ============================================================
 
 async function initApp() {
+  initPlatformUI();
   applyTheme(currentThemeId, false, false);
   await initMonaco();
   applyTheme(currentThemeId, false, false);

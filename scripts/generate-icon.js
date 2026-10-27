@@ -322,5 +322,47 @@ app.whenReady().then(async () => {
   execSync(`iconutil -c icns "${iconsetDir}" -o "${icnsPath}"`);
   console.log('Generated Handbook icon.icns successfully at:', icnsPath);
 
+  // Generate Windows .ico icon resource containing 16, 32, 64, 128, 256 px slices
+  console.log('Generating Windows multi-resolution icon.ico...');
+  const icoSizes = [16, 32, 64, 128, 256];
+  const pngBuffers = [];
+  for (const sz of icoSizes) {
+    const p = path.join(iconsetDir, `icon_${sz}x${sz}.png`);
+    if (fs.existsSync(p)) pngBuffers.push(fs.readFileSync(p));
+  }
+
+  if (pngBuffers.length > 0) {
+    const count = pngBuffers.length;
+    const header = Buffer.alloc(6);
+    header.writeUInt16LE(0, 0); // reserved
+    header.writeUInt16LE(1, 2); // type 1 = ICO
+    header.writeUInt16LE(count, 4); // count
+
+    const dirEntries = [];
+    let offset = 6 + count * 16;
+
+    for (const buf of pngBuffers) {
+      const entry = Buffer.alloc(16);
+      const width = buf.readUInt32BE(16);
+      const height = buf.readUInt32BE(20);
+
+      entry.writeUInt8(width >= 256 ? 0 : width, 0);
+      entry.writeUInt8(height >= 256 ? 0 : height, 1);
+      entry.writeUInt8(0, 2); // palette
+      entry.writeUInt8(0, 3); // reserved
+      entry.writeUInt16LE(1, 4); // color planes
+      entry.writeUInt16LE(32, 6); // bits per pixel
+      entry.writeUInt32LE(buf.length, 8); // image size
+      entry.writeUInt32LE(offset, 12); // offset
+      dirEntries.push(entry);
+      offset += buf.length;
+    }
+
+    const icoBuffer = Buffer.concat([header, ...dirEntries, ...pngBuffers]);
+    const icoPath = path.join(buildDir, 'icon.ico');
+    fs.writeFileSync(icoPath, icoBuffer);
+    console.log('Generated Handbook icon.ico successfully at:', icoPath);
+  }
+
   app.quit();
 });

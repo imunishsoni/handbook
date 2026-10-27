@@ -1,15 +1,22 @@
 {
   "name": "handbook",
   "productName": "Handbook",
-  "version": "2.4.0",
-  "description": "Handbook — A distraction-free, lightning-fast code and text editor for macOS",
+  "version": "2.5.0",
+  "description": "Handbook — A distraction-free, lightning-fast code and text editor for macOS, Linux, and Windows",
   "main": "main.js",
+  "bin": {
+    "handbook": "bin/handbook.js"
+  },
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
     "icon": "electron scripts/generate-icon.js",
     "build:native": "./scripts/build-native.sh",
-    "pack": "electron-packager . 'Handbook' --platform=darwin --arch=arm64 --icon=build/icon --out=dist --overwrite --app-bundle-id=com.handbook.editor --app-category-type=public.app-category.developer-tools --prune=true --ignore=^/build --ignore=^/dist",
+    "pack:mac": "electron-packager . 'Handbook' --platform=darwin --arch=all --icon=build/icon.icns --out=dist --overwrite --app-bundle-id=com.handbook.editor --app-category-type=public.app-category.developer-tools --prune=true --ignore=^/dist --ignore=^/build/icon.iconset",
+    "pack:linux": "electron-packager . 'Handbook' --platform=linux --arch=x64,arm64 --icon=assets/icon.png --out=dist --overwrite --prune=true --ignore=^/dist --ignore=^/build/icon.iconset",
+    "pack:win": "electron-packager . 'Handbook' --platform=win32 --arch=x64 --icon=build/icon.ico --out=dist --overwrite --prune=true --ignore=^/dist --ignore=^/build/icon.iconset",
+    "dist": "node scripts/build-dist.js",
+    "dist:all": "node scripts/build-dist.js --all",
     "dmg": "node scripts/build-dmg.js"
   },
   "devDependencies": {

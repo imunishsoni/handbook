@@ -1,5 +1,5 @@
 // ============================================================
-//  Handbook — Universal Native / WebKit Bridge
+//  Handbook — Universal Native / WebKit Bridge (Cross-Platform)
 // ============================================================
 
 (function () {
@@ -52,6 +52,14 @@
       });
     }
 
+    const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+    const plat = (typeof navigator !== 'undefined' && navigator.platform) || '';
+    const isWindows = /Win/i.test(plat) || /Windows/i.test(ua);
+    const isMac = !isWindows && (/Mac/i.test(plat) || /Macintosh/i.test(ua));
+    const isLinux = !isWindows && !isMac;
+    const currentPlatform = isWindows ? 'win32' : isMac ? 'darwin' : 'linux';
+    const pathSep = isWindows ? '\\' : '/';
+
     window.api = {
       openFolderDialog: () => sendNative('openFolderDialog'),
       openFileDialog: () => sendNative('openFileDialog'),
@@ -65,6 +73,12 @@
       onMenuAction: (callback) => menuListeners.push(callback),
       onCliOpen: (callback) => cliListeners.push(callback),
 
+      // Window controls
+      minimizeWindow: () => sendNative('minimizeWindow'),
+      maximizeWindow: () => sendNative('maximizeWindow'),
+      closeWindow: () => sendNative('closeWindow'),
+      isMaximized: () => sendNative('isMaximized'),
+
       // Integrated Terminal API
       terminalOpen: (options) => sendNative('terminalOpen', options),
       terminalWrite: (id, data) => sendNative('terminalWrite', { id, data }),
@@ -73,36 +87,59 @@
       onTerminalData: (callback) => terminalDataListeners.push(callback),
       onTerminalExit: (callback) => terminalExitListeners.push(callback),
 
-      platform: 'darwin',
-      homedir: '/',
+      platform: currentPlatform,
+      isMac,
+      isWindows,
+      isLinux,
+      homedir: isWindows ? 'C:\\' : '/',
     };
 
     window.nodePath = {
-      join: (...args) => args.filter(Boolean).join('/').replace(/\/+/g, '/'),
+      join: (...args) => {
+        const clean = args.filter(Boolean).map((a, i) => {
+          if (i === 0) return a.replace(/[/\\]+$/, '');
+          return a.replace(/^[/\\]+|[/\\]+$/g, '');
+        });
+        return clean.join(pathSep);
+      },
       basename: (p, ext) => {
-        const parts = p.replace(/\/+$/, '').split('/');
+        if (!p) return '';
+        const parts = p.replace(/[/\\]+$/, '').split(/[/\\]/);
         let base = parts[parts.length - 1] || '';
         if (ext && base.endsWith(ext)) base = base.slice(0, -ext.length);
         return base;
       },
       dirname: (p) => {
-        const idx = p.lastIndexOf('/');
-        return idx > 0 ? p.substring(0, idx) : (idx === 0 ? '/' : '.');
+        if (!p) return '.';
+        const normalized = p.replace(/[/\\]+$/, '');
+        const lastFwd = normalized.lastIndexOf('/');
+        const lastBack = normalized.lastIndexOf('\\');
+        const idx = Math.max(lastFwd, lastBack);
+        if (idx < 0) return '.';
+        if (idx === 0) return normalized[0];
+        // Handle Windows C:\
+        if (idx === 2 && normalized[1] === ':') return normalized.slice(0, 3);
+        return normalized.substring(0, idx);
       },
       extname: (p) => {
         const base = window.nodePath.basename(p);
         const idx = base.lastIndexOf('.');
         return idx > 0 ? base.substring(idx) : '';
       },
-      sep: '/',
+      sep: pathSep,
       relative: (from, to) => {
-        if (to.startsWith(from)) {
-          return to.slice(from.length).replace(/^\/+/, '');
+        if (!from || !to) return to || '';
+        const normFrom = from.replace(/\\/g, '/').replace(/\/+$/, '');
+        const normTo = to.replace(/\\/g, '/');
+        if (normTo.startsWith(normFrom)) {
+          return normTo.slice(normFrom.length).replace(/^\/+/, '').split('/').join(pathSep);
         }
         return to;
       },
+      normalize: (p) => p ? p.replace(/[/\\]+/g, pathSep) : '',
+      isAbsolute: (p) => Boolean(p && (p.startsWith('/') || p.startsWith('\\') || /^[a-zA-Z]:[/\\]/.test(p))),
     };
 
-    console.log('%c✦ Handbook Native Apple Silicon Bridge Activated', 'color: #38bdf8; font-weight: bold;');
+    console.log(`%c✦ Handbook Native Bridge Activated (${currentPlatform})`, 'color: #38bdf8; font-weight: bold;');
   }
 })();

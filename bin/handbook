@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# ============================================================
+#  Handbook — Cross-Platform Shell Launcher (macOS & Linux)
+# ============================================================
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# 1. macOS native app bundle check
+if [ "$(uname)" = "Darwin" ]; then
+  if [ -x "/Applications/Handbook.app/Contents/MacOS/Handbook" ]; then
+    exec "/Applications/Handbook.app/Contents/MacOS/Handbook" "$@"
+  elif [ -x "$DIR/dist/Handbook.app/Contents/MacOS/Handbook" ]; then
+    exec "$DIR/dist/Handbook.app/Contents/MacOS/Handbook" "$@"
+  fi
+fi
+
+# 2. Linux packaged binary check
+if [ "$(uname)" = "Linux" ]; then
+  if [ -x "$DIR/dist/Handbook-linux-x64/Handbook" ]; then
+    exec "$DIR/dist/Handbook-linux-x64/Handbook" "$@"
+  elif [ -x "$DIR/dist/Handbook-linux-arm64/Handbook" ]; then
+    exec "$DIR/dist/Handbook-linux-arm64/Handbook" "$@"
+  elif [ -x "/opt/Handbook/Handbook" ]; then
+    exec "/opt/Handbook/Handbook" "$@"
+  fi
+fi
+
+# 3. Fallback to node launcher or electron
+if command -v node >/dev/null 2>&1 && [ -f "$DIR/bin/handbook.js" ]; then
+  exec node "$DIR/bin/handbook.js" "$@"
+elif [ -x "$DIR/node_modules/.bin/electron" ]; then
+  exec "$DIR/node_modules/.bin/electron" "$DIR" "$@"
+else
+  electron "$DIR" "$@"
+fi
